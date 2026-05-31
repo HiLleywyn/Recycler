@@ -8,4 +8,4 @@
 # layer is keyed on this file, so changing the commit forces a fresh pull
 # (an unchanged `@main` would be served stale from cache). To adopt a new
 # framework version, update this SHA.
-bot-framework @ git+https://github.com/HiLleywyn/Framework.git@d0f95b0cc8c9292121acd7156a789af5f238cd6c
+bot-framework @ git+https://github.com/HiLleywyn/Framework.git@08809ed9b71c31e1762311092a963c855aa6747a
