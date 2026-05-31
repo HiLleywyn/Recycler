@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Compile and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test deps
+        run: pip install pytest
+      - name: Byte-compile Recycler's own modules
+        run: python -m compileall -q main.py bot_manifest.py database
+      - name: Run tests
+        run: python -m pytest tests/ -q
