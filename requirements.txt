@@ -1,0 +1,8 @@
+# Recycler depends on the reusable bot framework, built straight from the
+# Framework repo. The framework pulls in every shared runtime dependency
+# (discord.py, asyncpg, redis, fastapi, pillow, numpy, ...), so Recycler's
+# own requirements are intentionally tiny.
+#
+# Pin to a tag/commit for reproducible production builds. Tracks `main` now
+# that the framework has merged.
+bot-framework @ git+https://github.com/HiLleywyn/Framework.git@main
