@@ -1,0 +1,13 @@
+-- One-time cleanup of per-guild AI model overrides in ``ai_model_defaults``.
+-- A stale ``,ai model set tools openrouter:<model>`` row was forcing the
+-- tool-call loop onto OpenRouter even when the operator's TOOLS_BACKEND
+-- was Ollama, surfacing as e.g. "Gemma 4 26B A4B" requests in OpenRouter
+-- logs alongside the expected Ollama main-reply traffic.
+--
+-- The bridge's resolver is now env-wins (see _resolve_tools_pick in
+-- framework/agent_tools/ai_bridge.py), so non-matching rows are ignored
+-- at runtime regardless. This wipe is for DB hygiene: it clears the now-
+-- dead rows so the next admin who runs ``,ai model show`` sees a clean
+-- slate. Guilds that genuinely want a per-category override can re-set
+-- it via ``,ai model set <category> <provider>:<model>``.
+DELETE FROM ai_model_defaults;

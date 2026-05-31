@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disc.Fun Chart</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  /*
+    Disc.Fun chart palette  -  deliberately distinct from the regular
+    ,chart template so a player can tell at a glance that this is a
+    bonding-curve proto and not a graduated AMM token. Deep magenta /
+    indigo background, neon cyan / hot pink candles, purple grid.
+  */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a0d2e;
+    color: #e8d8ff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    width: 1200px;
+    height: 700px;
+    overflow: hidden;
+  }
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #221140;
+    border-bottom: 1px solid #4a2d7a;
+    height: 44px;
+  }
+  #header .pair {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff6cd9;
+    text-shadow: 0 0 6px rgba(255, 108, 217, 0.4);
+  }
+  #header .tf   { font-size: 13px; color: #b89dde; margin-left: 10px; }
+  #header .stats { font-size: 12px; color: #b89dde; display: flex; gap: 14px; }
+  #header .stats .up   { color: #00ffd5; }
+  #header .stats .down { color: #ff3d8b; }
+  #header .badge {
+    margin-right: 10px;
+    padding: 2px 8px;
+    background: linear-gradient(90deg, #ff6cd9, #7c4dff);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  #chart-main { width: 1200px; }
+  .sub-panel { border-top: 1px solid #4a2d7a; }
+  #footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 22px;
+    background: #221140;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 11px;
+    color: #b89dde;
+    border-top: 1px solid #4a2d7a;
+  }
+</style>
+</head>
+<body>
+<div id="header">
+  <div>
+    <span class="badge">DISC.FUN · BONDING CURVE</span>
+    <span class="pair" id="header-pair">PAIR</span>
+    <span class="tf" id="header-tf">TF</span>
+  </div>
+  <div class="stats" id="header-stats"></div>
+</div>
+<div id="chart-main"></div>
+<div id="footer">Disc.Fun • Pre-graduation virtual liquidity</div>
+
+<script>
+const D = window.CHART_DATA || {};
+const candles    = D.candles    || [];
+const pair       = D.pair       || "PAIR";
+const tf         = D.tf         || "";
+const indicators = D.indicators || {};
+
+document.getElementById("header-pair").textContent = pair;
+document.getElementById("header-tf").textContent   = tf;
+
+// ── Layout sizes ─────────────────────────────────────────────────────────────
+const HEADER_H = 44;
+const FOOTER_H = 22;
+const TOTAL_H  = 700;
+const WIDTH    = 1200;
+
+const SUB_PANELS = [];
+if (indicators.rsi)  SUB_PANELS.push("rsi");
+if (indicators.vol)  SUB_PANELS.push("vol");
+
+const SUB_H  = SUB_PANELS.length > 0 ? 110 : 0;
+const MAIN_H = TOTAL_H - HEADER_H - FOOTER_H - SUB_PANELS.length * SUB_H;
+
+// ── Disc.Fun palette  -  intentionally NOT the green/red of ,chart ──────────
+const COLOR_UP    = "#00ffd5";   // cyan
+const COLOR_DOWN  = "#ff3d8b";   // hot pink
+const COLOR_BG    = "#1a0d2e";   // deep indigo
+const COLOR_GRID  = "#2d1a4d";
+const COLOR_AXIS  = "#4a2d7a";
+const COLOR_TEXT  = "#e8d8ff";
+
+const baseOpts = {
+  width: WIDTH,
+  layout: { background: { color: COLOR_BG }, textColor: COLOR_TEXT },
+  grid: {
+    vertLines: { color: COLOR_GRID },
+    horzLines: { color: COLOR_GRID },
+  },
+  crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  rightPriceScale: { borderColor: COLOR_AXIS },
+  timeScale: { borderColor: COLOR_AXIS, timeVisible: true, secondsVisible: false },
+};
+
+// ── Main candlestick chart ────────────────────────────────────────────────────
+const mainDiv = document.createElement("div");
+mainDiv.style.height = MAIN_H + "px";
+document.getElementById("chart-main").appendChild(mainDiv);
+
+const mainChart = LightweightCharts.createChart(mainDiv, { ...baseOpts, height: MAIN_H });
+mainChart.timeScale().applyOptions({ visible: SUB_PANELS.length === 0 });
+
+const candleSeries = mainChart.addCandlestickSeries({
+  upColor:        COLOR_UP,
+  downColor:      COLOR_DOWN,
+  borderUpColor:  COLOR_UP,
+  borderDownColor:COLOR_DOWN,
+  wickUpColor:    COLOR_UP,
+  wickDownColor:  COLOR_DOWN,
+});
+candleSeries.setData(candles);
+mainChart.timeScale().fitContent();
+
+// ── Optional graduation line ──────────────────────────────────────────────────
+if (typeof D.grad_price === "number" && D.grad_price > 0) {
+  candleSeries.createPriceLine({
+    price: D.grad_price,
+    color: "#ffd166",
+    lineWidth: 2,
+    lineStyle: 2,
+    axisLabelVisible: true,
+    title: "Graduation",
+  });
+}
+
+// ── Overlay EMA (single, pulled in by default for trend feel) ─────────────────
+if (indicators.ema) {
+  const emaColors = ["#ffd166", "#ff9f1c", "#ff6cd9"];
+  let ci = 0;
+  for (const [label, data] of Object.entries(indicators.ema)) {
+    const s = mainChart.addLineSeries({ color: emaColors[ci++ % emaColors.length], lineWidth: 1, title: label });
+    s.setData(data);
+  }
+}
+
+// ── Header OHLC stats ─────────────────────────────────────────────────────────
+if (candles.length > 0) {
+  const last  = candles[candles.length - 1];
+  const first = candles[0];
+  const pct = ((last.close - first.open) / first.open * 100).toFixed(2);
+  const cls = pct >= 0 ? "up" : "down";
+  const fmt = (v) => {
+    if (v === undefined || v === null) return "-";
+    if (Math.abs(v) < 1e-4) return v.toExponential(3);
+    return v.toLocaleString(undefined, { maximumFractionDigits: 8 });
+  };
+  const statsEl = document.getElementById("header-stats");
+  statsEl.innerHTML = `
+    <span>O: ${fmt(first.open)}</span>
+    <span>H: ${fmt(Math.max(...candles.map(c => c.high)))}</span>
+    <span>L: ${fmt(Math.min(...candles.map(c => c.low)))}</span>
+    <span>C: ${fmt(last.close)}</span>
+    <span class="${cls}">${pct >= 0 ? "+" : ""}${pct}%</span>
+  `;
+}
+
+// ── Sub-panel (volume) ────────────────────────────────────────────────────────
+function makeSubPanel(parentEl, height, isLast) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "sub-panel";
+  wrapper.style.height = height + "px";
+  parentEl.appendChild(wrapper);
+  return LightweightCharts.createChart(wrapper, {
+    ...baseOpts,
+    height,
+    timeScale: { ...baseOpts.timeScale, visible: isLast },
+  });
+}
+
+const subContainer = document.getElementById("chart-main");
+SUB_PANELS.forEach((panel, idx) => {
+  const isLast = idx === SUB_PANELS.length - 1;
+  const chart  = makeSubPanel(subContainer, SUB_H, isLast);
+
+  if (panel === "rsi" && indicators.rsi) {
+    const s  = chart.addLineSeries({ color: COLOR_UP, lineWidth: 1, title: "RSI" });
+    const ob = chart.addLineSeries({ color: COLOR_DOWN, lineWidth: 1, lineStyle: 2 });
+    const os = chart.addLineSeries({ color: "#7c4dff", lineWidth: 1, lineStyle: 2 });
+    s.setData(indicators.rsi);
+    ob.setData(indicators.rsi.map(d => ({ time: d.time, value: 70 })));
+    os.setData(indicators.rsi.map(d => ({ time: d.time, value: 30 })));
+  }
+
+  if (panel === "vol" && indicators.vol) {
+    const volSeries = chart.addHistogramSeries({
+      color: COLOR_UP,
+      priceFormat: { type: "volume" },
+    });
+    volSeries.setData(indicators.vol.map(d => ({
+      ...d,
+      color: d.value >= 0 ? COLOR_UP + "80" : COLOR_DOWN + "80",
+    })));
+  }
+
+  mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    if (range) chart.timeScale().setVisibleLogicalRange(range);
+  });
+});
+</script>
+</body>
+</html>

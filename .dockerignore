@@ -1,0 +1,51 @@
+# Python runtime artifacts
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Database files (live in Docker named volume, not image layer)
+*.db
+*.db-wal
+*.db-shm
+
+# Secrets — injected at runtime via env_file / environment
+.env
+
+# Version control
+.git/
+.gitignore
+
+# Editor / IDE
+*.code-workspace
+.vscode/
+.claude/
+
+# Frontend — built fresh inside Docker; no need to ship source deps or old builds
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+api/frontend/node_modules/
+api/frontend/build/
+api/frontend/app_backup/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CI metadata — not needed in runtime image
+.github/
+README.md
+CONTRIBUTING.md
+PUBLISHING.md
+docker-compose.yml
+railway.toml
+# CHANGELOG.md is intentionally NOT ignored: cogs/changelog.py reads it
+# at runtime to power the player-facing ,changelog command.
+
+# Temp
+temp/
+.temp/

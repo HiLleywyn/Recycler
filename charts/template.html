@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discoin Chart</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+  }
+  body.dark  { background: #0d1117; color: #c9d1d9; }
+  body.light { background: #f6f8fa; color: #1f2328; }
+
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    height: 56px;
+    border-bottom: 1px solid var(--border-c, #30363d);
+    background: var(--header-bg, #0d1117);
+  }
+  body.light #header {
+    --border-c: #d0d7de;
+    --header-bg: #ffffff;
+  }
+  #header .lhs { display: flex; align-items: baseline; gap: 10px; }
+  #header .pair { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; }
+  #header .tf   {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--chip-bg, #1f6feb);
+    color: #fff;
+  }
+  #header .stats {
+    font-size: 11px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  #header .stats .lbl { opacity: 0.55; font-size: 9px; margin-right: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+  #header .up   { color: #2ea043; font-weight: 700; }
+  #header .down { color: #cf222e; font-weight: 700; }
+
+  #pivots { font-size: 11px; padding: 4px 20px; opacity: 0.65; border-bottom: 1px solid var(--border-c, #30363d); }
+  #pivots span { margin-right: 12px; }
+  #pivots span b { font-variant-numeric: tabular-nums; }
+
+  #chart-main { width: 100%; }
+  .sub-panel  { border-top: 1px solid var(--border-c, #30363d); }
+  .compare-panel { border-top: 1px solid var(--border-c, #30363d); }
+
+  #footer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 11px;
+    opacity: 0.7;
+    border-top: 1px solid var(--border-c, #30363d);
+    background: var(--header-bg, #0d1117);
+  }
+  #footer .legend { display: flex; gap: 12px; }
+  #footer .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  body.minimal #header,
+  body.minimal #footer,
+  body.minimal #pivots { display: none; }
+</style>
+</head>
+<body class="dark">
+<div id="header">
+  <div class="lhs">
+    <span class="pair" id="header-pair">PAIR</span>
+    <span class="tf"   id="header-tf">TF</span>
+  </div>
+  <div class="stats" id="header-stats"></div>
+</div>
+<div id="pivots"></div>
+<div id="chart-main"></div>
+<div id="footer">
+  <div class="legend" id="legend"></div>
+  <div id="footer-brand">Discoin  ·  Simulated Market</div>
+</div>
+
+<script>
+const D = window.CHART_DATA || {};
+const candles    = D.candles || [];
+const pair       = D.pair || "PAIR";
+const tf         = D.tf || "";
+const indicators = D.indicators || {};
+const layout     = D.layout || {};
+const stats      = D.stats || {};
+const compare    = D.compare || [];
+const baseNorm   = D.base_norm || [];
+const viewport   = D.viewport || {width: 1200, height: 760};
+const patternOverlay = D.pattern_overlay || {};
+const isLive    = !!D.live;
+
+// Live ($chart / $scan) charts brand as "Discoin" only; the
+// simulated-market label only applies to the in-game token charts.
+const brandEl = document.getElementById("footer-brand");
+if (brandEl) brandEl.textContent = isLive ? "Discoin" : "Discoin  ·  Simulated Market";
+
+document.body.style.width  = viewport.width  + "px";
+document.body.style.height = viewport.height + "px";
+const W = viewport.width;
+const TOTAL_H = viewport.height;
+
+// ── Theme classes ─────────────────────────────────────────────────────────────
+if ((layout.theme || "dark") === "light") {
+  document.body.classList.remove("dark");
+  document.body.classList.add("light");
+}
+if (layout.chrome === "minimal") document.body.classList.add("minimal");
+
+// Color theme tokens.
+const isLight = (layout.theme === "light");
+const THEME = isLight ? {
+  bg: "#ffffff", panel: "#f6f8fa", text: "#1f2328",
+  grid: "#e6ebf1",   border: "#d0d7de",
+  bull: "#1a7f37",   bear: "#cf222e",
+  emaColors: ["#9a6700", "#fb8500", "#bc4c00"],
+  smaColors: ["#0969da", "#1f6feb", "#0a3069"],
+  wmaColors: ["#8250df", "#a475f9", "#6639ba"],
+  bb:  "#8250df",
+  donch: "#1f6feb",  kelt: "#bf3989",
+  vwap: "#3192aa",   obv: "#bf8700",
+  st_up: "#1a7f37",  st_dn: "#cf222e",
+  psar: "#8250df",
+  ichi_a: "#1a7f3733", ichi_b: "#cf222e33",
+  ichi_t: "#1f6feb",   ichi_k: "#9a6700",  ichi_c: "#8250df",
+  rsi: "#bf8700",      rsi_ob: "#cf222e", rsi_os: "#1a7f37",
+  macd: "#1f6feb", macd_sig: "#cf222e",
+  stoch_k: "#1f6feb",  stoch_d: "#fb8500",
+  atr: "#bf3989", adx: "#1f6feb", pdi: "#1a7f37", mdi: "#cf222e",
+  cci: "#8250df", mfi: "#bf8700", wpr: "#fb8500", roc: "#3192aa",
+  pivot: "#1f6feb",
+  cmp: ["#cf222e", "#bf8700", "#8250df"],
+} : {
+  bg: "#0d1117", panel: "#161b22", text: "#c9d1d9",
+  grid: "#21262d", border: "#30363d",
+  bull: "#00d68f",  bear: "#ff5d6c",
+  emaColors: ["#ffc857", "#ff9b3f", "#ff6b35"],
+  smaColors: ["#56a8ff", "#3a8aff", "#8b66ff"],
+  wmaColors: ["#c792ff", "#a16bff", "#7e4ff5"],
+  bb:  "#b388ff",
+  donch: "#56a8ff",  kelt: "#ff7ac6",
+  vwap: "#00d4ff",   obv: "#ffc857",
+  st_up: "#00d68f",  st_dn: "#ff5d6c",
+  psar: "#b388ff",
+  ichi_a: "rgba(0, 214, 143, 0.18)",
+  ichi_b: "rgba(255, 93, 108, 0.18)",
+  ichi_t: "#56a8ff",   ichi_k: "#ffc857",  ichi_c: "#b388ff",
+  rsi: "#ffc857", rsi_ob: "#ff5d6c", rsi_os: "#00d68f",
+  macd: "#56a8ff", macd_sig: "#ff5d6c",
+  stoch_k: "#56a8ff", stoch_d: "#ff9b3f",
+  atr: "#ff7ac6", adx: "#56a8ff", pdi: "#00d68f", mdi: "#ff5d6c",
+  cci: "#b388ff", mfi: "#ffc857", wpr: "#ff9b3f", roc: "#00d4ff",
+  pivot: "#56a8ff",
+  cmp: ["#ff5d6c", "#ffc857", "#b388ff"],
+};
+document.body.style.background = THEME.bg;
+document.body.style.color = THEME.text;
+
+document.getElementById("header-pair").textContent = pair;
+document.getElementById("header-tf").textContent   = tf;
+
+// ── Header OHLC stats panel ──────────────────────────────────────────────────
+function fmt(v, d) {
+  if (v === null || v === undefined || isNaN(v)) return "-";
+  return Number(v).toLocaleString(undefined, {maximumFractionDigits: d ?? 4});
+}
+if (candles.length) {
+  const pct = stats.pct_change ?? 0;
+  const cls = pct >= 0 ? "up" : "down";
+  const arrow = pct >= 0 ? "▲" : "▼";
+  document.getElementById("header-stats").innerHTML = `
+    <span><span class="lbl">O</span>${fmt(stats.open, 4)}</span>
+    <span><span class="lbl">H</span>${fmt(stats.high, 4)}</span>
+    <span><span class="lbl">L</span>${fmt(stats.low, 4)}</span>
+    <span><span class="lbl">C</span>${fmt(stats.close, 4)}</span>
+    <span class="${cls}">${arrow} ${(pct>=0?"+":"")}${pct.toFixed(2)}%</span>
+  `;
+}
+
+// ── Layout sizes ─────────────────────────────────────────────────────────────
+const HEADER_H  = (layout.chrome === "minimal") ? 0 : 56;
+const FOOTER_H  = (layout.chrome === "minimal") ? 0 : 26;
+const PIVOTS_H  = (indicators.pivots && layout.chrome !== "minimal") ? 24 : 0;
+
+const SUB_PANELS = [];
+if (indicators.rsi)   SUB_PANELS.push("rsi");
+if (indicators.macd)  SUB_PANELS.push("macd");
+if (indicators.stoch) SUB_PANELS.push("stoch");
+if (indicators.adx)   SUB_PANELS.push("adx");
+if (indicators.atr)   SUB_PANELS.push("atr");
+if (indicators.cci)   SUB_PANELS.push("cci");
+if (indicators.wpr)   SUB_PANELS.push("wpr");
+if (indicators.mfi)   SUB_PANELS.push("mfi");
+if (indicators.roc)   SUB_PANELS.push("roc");
+if (indicators.momentum) SUB_PANELS.push("momentum");
+if (indicators.obv)   SUB_PANELS.push("obv");
+if (indicators.vol)   SUB_PANELS.push("vol");
+const showCompare = compare.length > 0;
+
+const SUB_H = 96;
+const CMP_H = showCompare ? 220 : 0;
+const usedSub = SUB_PANELS.length * SUB_H + CMP_H;
+const MAIN_H = Math.max(220, TOTAL_H - HEADER_H - FOOTER_H - PIVOTS_H - usedSub);
+
+document.getElementById("pivots").style.display = PIVOTS_H ? "block" : "none";
+if (indicators.pivots) {
+  const piv = indicators.pivots;
+  const slots = ["S3","S2","S1","P","R1","R2","R3"];
+  document.getElementById("pivots").innerHTML = slots.map(k =>
+    `<span>${k}: <b>${fmt(piv[k], 4)}</b></span>`
+  ).join("");
+}
+
+// ── Shared chart options ─────────────────────────────────────────────────────
+const baseOpts = {
+  width: W,
+  layout: { background: { color: THEME.bg }, textColor: THEME.text, fontSize: 17 },
+  grid: {
+    vertLines: { color: THEME.grid },
+    horzLines: { color: THEME.grid },
+  },
+  crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  rightPriceScale: { borderColor: THEME.border, mode: layout.log_scale ? 1 : 0 },
+  timeScale: { borderColor: THEME.border, timeVisible: true, secondsVisible: false },
+};
+
+// ── Main chart ───────────────────────────────────────────────────────────────
+const mainDiv = document.createElement("div");
+mainDiv.style.height = MAIN_H + "px";
+document.getElementById("chart-main").appendChild(mainDiv);
+
+const mainChart = LightweightCharts.createChart(mainDiv, { ...baseOpts, height: MAIN_H });
+const willHaveSub = (SUB_PANELS.length + (showCompare ? 1 : 0)) > 0;
+mainChart.timeScale().applyOptions({ visible: !willHaveSub });
+
+// Pick the main price-series shape (candles / line / area / bars / heikin).
+let mainSeries;
+const ct = (layout.candle_type || "candles");
+if (ct === "line") {
+  mainSeries = mainChart.addLineSeries({ color: THEME.bull, lineWidth: 2 });
+  mainSeries.setData(candles.map(c => ({ time: c.time, value: c.close })));
+} else if (ct === "area") {
+  mainSeries = mainChart.addAreaSeries({
+    lineColor: THEME.bull, topColor: THEME.bull + "60", bottomColor: THEME.bull + "10",
+  });
+  mainSeries.setData(candles.map(c => ({ time: c.time, value: c.close })));
+} else if (ct === "bars") {
+  mainSeries = mainChart.addBarSeries({
+    upColor: THEME.bull, downColor: THEME.bear,
+  });
+  mainSeries.setData(candles);
+} else {
+  mainSeries = mainChart.addCandlestickSeries({
+    upColor: THEME.bull, downColor: THEME.bear,
+    borderUpColor: THEME.bull, borderDownColor: THEME.bear,
+    wickUpColor: THEME.bull, wickDownColor: THEME.bear,
+  });
+  mainSeries.setData(candles);
+}
+mainChart.timeScale().fitContent();
+
+const legendEntries = [];
+
+// ── Overlay indicators ───────────────────────────────────────────────────────
+function paint(map, colours, label_prefix) {
+  let ci = 0;
+  for (const [label, data] of Object.entries(map)) {
+    const c = colours[ci++ % colours.length];
+    const s = mainChart.addLineSeries({ color: c, lineWidth: 2, title: label });
+    s.setData(data);
+    legendEntries.push({color: c, label});
+  }
+}
+if (indicators.ema) paint(indicators.ema, THEME.emaColors);
+if (indicators.sma) paint(indicators.sma, THEME.smaColors);
+if (indicators.wma) paint(indicators.wma, THEME.wmaColors);
+
+function paintBand(b, color, name) {
+  if (!b) return;
+  const up  = mainChart.addLineSeries({ color, lineWidth: 1, title: name + " Up", lineStyle: 0 });
+  const mid = mainChart.addLineSeries({ color, lineWidth: 1, title: name + " Mid", lineStyle: 2 });
+  const lo  = mainChart.addLineSeries({ color, lineWidth: 1, title: name + " Lo", lineStyle: 0 });
+  up.setData(b.upper); mid.setData(b.mid); lo.setData(b.lower);
+  legendEntries.push({color, label: name});
+}
+paintBand(indicators.bb,       THEME.bb,    "BB(20)");
+paintBand(indicators.donchian, THEME.donch, "Donch(" + (indicators.donchian?.period ?? 20) + ")");
+paintBand(indicators.keltner,  THEME.kelt,  "Kelt(" + (indicators.keltner?.period ?? 20) + ")");
+
+if (indicators.vwap) {
+  const s = mainChart.addLineSeries({ color: THEME.vwap, lineWidth: 2, title: "VWAP" });
+  s.setData(indicators.vwap);
+  legendEntries.push({color: THEME.vwap, label: "VWAP"});
+}
+if (indicators.supertrend) {
+  const up = mainChart.addLineSeries({ color: THEME.st_up, lineWidth: 2, title: "ST up" });
+  const dn = mainChart.addLineSeries({ color: THEME.st_dn, lineWidth: 2, title: "ST dn" });
+  up.setData(indicators.supertrend.up);
+  dn.setData(indicators.supertrend.down);
+  legendEntries.push({color: THEME.st_up, label: "SuperTrend"});
+}
+if (indicators.psar) {
+  const sar = mainChart.addLineSeries({
+    color: THEME.psar, lineWidth: 0, lineStyle: 0,
+    pointMarkersVisible: true, pointMarkersRadius: 2, title: "PSAR",
+  });
+  sar.setData(indicators.psar);
+  legendEntries.push({color: THEME.psar, label: "PSAR"});
+}
+if (indicators.ichimoku) {
+  const ich = indicators.ichimoku;
+  const t = mainChart.addLineSeries({ color: THEME.ichi_t, lineWidth: 1, title: "Tenkan" });
+  const k = mainChart.addLineSeries({ color: THEME.ichi_k, lineWidth: 1, title: "Kijun" });
+  const a = mainChart.addAreaSeries({
+    lineColor: THEME.ichi_a, topColor: THEME.ichi_a, bottomColor: THEME.ichi_a,
+    title: "Senkou A",
+  });
+  const b = mainChart.addAreaSeries({
+    lineColor: THEME.ichi_b, topColor: THEME.ichi_b, bottomColor: THEME.ichi_b,
+    title: "Senkou B",
+  });
+  const ch = mainChart.addLineSeries({ color: THEME.ichi_c, lineWidth: 1, lineStyle: 2, title: "Chikou" });
+  t.setData(ich.tenkan);  k.setData(ich.kijun);
+  a.setData(ich.senkou_a.map(p => ({time: p.time, value: p.value})));
+  b.setData(ich.senkou_b.map(p => ({time: p.time, value: p.value})));
+  ch.setData(ich.chikou);
+  legendEntries.push({color: THEME.ichi_t, label: "Ichimoku"});
+}
+if (indicators.pivots) {
+  const piv = indicators.pivots;
+  const last = candles[candles.length - 1];
+  const first = candles[0];
+  if (last && first) {
+    const slots = [
+      ["P",  piv.P,  THEME.pivot, 0],
+      ["R1", piv.R1, THEME.pivot, 2],
+      ["R2", piv.R2, THEME.pivot, 2],
+      ["R3", piv.R3, THEME.pivot, 2],
+      ["S1", piv.S1, THEME.pivot, 2],
+      ["S2", piv.S2, THEME.pivot, 2],
+      ["S3", piv.S3, THEME.pivot, 2],
+    ];
+    for (const [label, value, color, ls] of slots) {
+      if (value === undefined || value === null) continue;
+      const s = mainChart.addLineSeries({ color, lineWidth: 1, lineStyle: ls, title: label });
+      s.setData([
+        { time: first.time, value },
+        { time: last.time,  value },
+      ]);
+    }
+    legendEntries.push({color: THEME.pivot, label: "Pivots"});
+  }
+}
+
+// ── Pattern overlay (trendlines + markers from services/pattern_scout) ──────
+if (patternOverlay && (patternOverlay.trendlines || patternOverlay.markers)) {
+  const overlayColors = {
+    resistance: "#ff5d6c",
+    support:    "#00d68f",
+    neckline:   "#ffc857",
+    pole:       "#b388ff",
+  };
+  for (const tl of (patternOverlay.trendlines || [])) {
+    if (!tl.points || tl.points.length < 2) continue;
+    const col = overlayColors[tl.role] || "#56a8ff";
+    const isPole = tl.role === "pole";
+    const series = mainChart.addLineSeries({
+      color: col,
+      lineWidth: isPole ? 3 : 2,
+      lineStyle: tl.role === "neckline" ? 2 : 0,
+      lastValueVisible: false,
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
+      title: tl.label || tl.role,
+    });
+    const sorted = [...tl.points].sort((a, b) => a.time - b.time);
+    series.setData(sorted);
+    legendEntries.push({color: col, label: tl.label || tl.role});
+  }
+  if (patternOverlay.markers && patternOverlay.markers.length) {
+    const lwcMarkers = patternOverlay.markers.map(m => ({
+      time: m.time,
+      position: m.above ? "aboveBar" : "belowBar",
+      color: overlayColors[m.role] || "#ffc857",
+      shape: m.above ? "arrowDown" : "arrowUp",
+      text:  m.label || "",
+    })).sort((a, b) => a.time - b.time);
+    try {
+      mainSeries.setMarkers(lwcMarkers);
+    } catch (e) {
+      // Some main-series shapes (line/area) don't support markers; ignore.
+    }
+  }
+}
+
+// ── Sub-panel factory ────────────────────────────────────────────────────────
+const subContainer = document.getElementById("chart-main");
+const subCharts = [];
+function makeSubPanel(height, isLast) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "sub-panel";
+  wrapper.style.height = height + "px";
+  subContainer.appendChild(wrapper);
+  const chart = LightweightCharts.createChart(wrapper, {
+    ...baseOpts,
+    height,
+    timeScale: { ...baseOpts.timeScale, visible: isLast },
+  });
+  subCharts.push(chart);
+  return chart;
+}
+
+function flatLine(srcSeries, value) {
+  return srcSeries.length
+    ? [{time: srcSeries[0].time, value}, {time: srcSeries[srcSeries.length - 1].time, value}]
+    : [];
+}
+
+const lastSubIdx = SUB_PANELS.length - 1;
+SUB_PANELS.forEach((panel, idx) => {
+  const isLast = idx === lastSubIdx && !showCompare;
+  const chart = makeSubPanel(SUB_H, isLast);
+
+  if (panel === "rsi") {
+    const s  = chart.addLineSeries({ color: THEME.rsi, lineWidth: 1, title: "RSI" });
+    s.setData(indicators.rsi.value || indicators.rsi);
+    chart.addLineSeries({ color: THEME.rsi_ob, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.rsi.value || indicators.rsi, 70));
+    chart.addLineSeries({ color: THEME.rsi_os, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.rsi.value || indicators.rsi, 30));
+    legendEntries.push({color: THEME.rsi, label: "RSI"});
+  }
+  if (panel === "macd") {
+    const m = chart.addLineSeries({ color: THEME.macd, lineWidth: 1, title: "MACD" });
+    const s = chart.addLineSeries({ color: THEME.macd_sig, lineWidth: 1, title: "Sig" });
+    const h = chart.addHistogramSeries({ priceScaleId: "" });
+    m.setData(indicators.macd.macd);
+    s.setData(indicators.macd.signal);
+    h.setData(indicators.macd.histogram.map(d => ({
+      ...d,
+      color: d.value >= 0 ? THEME.bull : THEME.bear,
+    })));
+    legendEntries.push({color: THEME.macd, label: "MACD"});
+  }
+  if (panel === "stoch") {
+    chart.addLineSeries({ color: THEME.stoch_k, lineWidth: 1, title: "%K" })
+      .setData(indicators.stoch.k);
+    chart.addLineSeries({ color: THEME.stoch_d, lineWidth: 1, title: "%D" })
+      .setData(indicators.stoch.d);
+    chart.addLineSeries({ color: THEME.rsi_ob, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.stoch.k, 80));
+    chart.addLineSeries({ color: THEME.rsi_os, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.stoch.k, 20));
+    legendEntries.push({color: THEME.stoch_k, label: "Stoch"});
+  }
+  if (panel === "adx") {
+    chart.addLineSeries({ color: THEME.adx, lineWidth: 2, title: "ADX" })
+      .setData(indicators.adx.adx);
+    chart.addLineSeries({ color: THEME.pdi, lineWidth: 1, title: "+DI" })
+      .setData(indicators.adx.plus_di);
+    chart.addLineSeries({ color: THEME.mdi, lineWidth: 1, title: "-DI" })
+      .setData(indicators.adx.minus_di);
+    chart.addLineSeries({ color: THEME.grid, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.adx.adx, 25));
+    legendEntries.push({color: THEME.adx, label: "ADX/+DI/-DI"});
+  }
+  if (panel === "atr") {
+    chart.addLineSeries({ color: THEME.atr, lineWidth: 2, title: "ATR" })
+      .setData(indicators.atr.value);
+    legendEntries.push({color: THEME.atr, label: "ATR"});
+  }
+  if (panel === "cci") {
+    chart.addLineSeries({ color: THEME.cci, lineWidth: 1, title: "CCI" })
+      .setData(indicators.cci.value);
+    chart.addLineSeries({ color: THEME.rsi_ob, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.cci.value, 100));
+    chart.addLineSeries({ color: THEME.rsi_os, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.cci.value, -100));
+    legendEntries.push({color: THEME.cci, label: "CCI"});
+  }
+  if (panel === "wpr") {
+    chart.addLineSeries({ color: THEME.wpr, lineWidth: 1, title: "Wm%R" })
+      .setData(indicators.wpr.value);
+    chart.addLineSeries({ color: THEME.rsi_ob, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.wpr.value, -20));
+    chart.addLineSeries({ color: THEME.rsi_os, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.wpr.value, -80));
+    legendEntries.push({color: THEME.wpr, label: "Wm%R"});
+  }
+  if (panel === "mfi") {
+    chart.addLineSeries({ color: THEME.mfi, lineWidth: 1, title: "MFI" })
+      .setData(indicators.mfi.value);
+    chart.addLineSeries({ color: THEME.rsi_ob, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.mfi.value, 80));
+    chart.addLineSeries({ color: THEME.rsi_os, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.mfi.value, 20));
+    legendEntries.push({color: THEME.mfi, label: "MFI"});
+  }
+  if (panel === "roc") {
+    chart.addLineSeries({ color: THEME.roc, lineWidth: 1, title: "ROC" })
+      .setData(indicators.roc.value);
+    chart.addLineSeries({ color: THEME.grid, lineWidth: 1, lineStyle: 2 })
+      .setData(flatLine(indicators.roc.value, 0));
+    legendEntries.push({color: THEME.roc, label: "ROC"});
+  }
+  if (panel === "momentum") {
+    chart.addLineSeries({ color: THEME.roc, lineWidth: 1, title: "Mom" })
+      .setData(indicators.momentum);
+    legendEntries.push({color: THEME.roc, label: "Momentum"});
+  }
+  if (panel === "obv") {
+    chart.addLineSeries({ color: THEME.obv, lineWidth: 2, title: "OBV" })
+      .setData(indicators.obv);
+    legendEntries.push({color: THEME.obv, label: "OBV"});
+  }
+  if (panel === "vol") {
+    const vs = chart.addHistogramSeries({
+      priceFormat: { type: "volume" },
+      priceScaleId: "",
+    });
+    vs.setData(indicators.vol.map(d => ({
+      time: d.time, value: d.value,
+      color: (d.close >= (d.open ?? d.close)) ? (THEME.bull + "B0") : (THEME.bear + "B0"),
+    })));
+    chart.priceScale("").applyOptions({ scaleMargins: { top: 0.75, bottom: 0 } });
+    legendEntries.push({color: THEME.bull, label: "Volume"});
+  }
+});
+
+// ── Comparison panel (multiple symbols normalised to 100) ───────────────────
+if (showCompare) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "compare-panel";
+  wrapper.style.height = CMP_H + "px";
+  subContainer.appendChild(wrapper);
+  const cmpChart = LightweightCharts.createChart(wrapper, {
+    ...baseOpts,
+    height: CMP_H,
+    timeScale: { ...baseOpts.timeScale, visible: true },
+  });
+  subCharts.push(cmpChart);
+  // Base series in white-ish + each comparison in a palette colour.
+  const baseColor = isLight ? "#1f2328" : "#ffffff";
+  const bs = cmpChart.addLineSeries({ color: baseColor, lineWidth: 2, title: pair });
+  bs.setData(baseNorm);
+  legendEntries.push({color: baseColor, label: pair + " (100)"});
+  compare.forEach((c, i) => {
+    const col = THEME.cmp[i % THEME.cmp.length];
+    const s = cmpChart.addLineSeries({ color: col, lineWidth: 2, title: c.symbol });
+    s.setData(c.points);
+    legendEntries.push({color: col, label: c.symbol});
+  });
+  // Anchor line at 100.
+  cmpChart.addLineSeries({ color: THEME.grid, lineWidth: 1, lineStyle: 2 })
+    .setData(flatLine(baseNorm, 100));
+}
+
+// ── Sync time scales ─────────────────────────────────────────────────────────
+function syncTime(src, dst) {
+  src.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    if (range) dst.timeScale().setVisibleLogicalRange(range);
+  });
+}
+subCharts.forEach(c => syncTime(mainChart, c));
+
+// ── Legend chips ────────────────────────────────────────────────────────────
+const legendEl = document.getElementById("legend");
+legendEl.innerHTML = legendEntries.slice(0, 12).map(e =>
+  `<span><span class="dot" style="background:${e.color}"></span>${e.label}</span>`
+).join("");
+
+</script>
+</body>
+</html>

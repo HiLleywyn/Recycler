@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="wm-grad" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C5CFF"/>
+      <stop offset="60%" stop-color="#4FB3FF"/>
+      <stop offset="100%" stop-color="#5AEBE0"/>
+    </linearGradient>
+    <linearGradient id="wm-mark" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C5CFF"/>
+      <stop offset="55%" stop-color="#4FB3FF"/>
+      <stop offset="100%" stop-color="#5AEBE0"/>
+    </linearGradient>
+  </defs>
+  <!-- Mark -->
+  <circle cx="32" cy="32" r="30" fill="url(#wm-mark)"/>
+  <circle cx="32" cy="32" r="25" fill="#0B0D1F"/>
+  <path
+    d="M22 18h11c8.28 0 14 6.27 14 14s-5.72 14-14 14H22V18zm6 6v16h5c4.42 0 8-3.58 8-8s-3.58-8-8-8h-5z"
+    fill="url(#wm-mark)"
+  />
+  <path d="M43 22l4-4 2 2-4 4-2-2z" fill="#5AEBE0" opacity="0.9"/>
+  <!-- Wordmark: Discoin -->
+  <text
+    x="78" y="42"
+    font-family="'Space Grotesk', 'Inter', system-ui, sans-serif"
+    font-weight="600"
+    font-size="32"
+    letter-spacing="-0.02em"
+    fill="url(#wm-grad)"
+  >Discoin</text>
+</svg>

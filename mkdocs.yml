@@ -1,0 +1,88 @@
+site_name: Discoin
+site_description: Discord economy bot with crypto markets, mining, staking, AMM pools, lending, and a web dashboard.
+site_url: https://discoin.cc/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+plugins:
+  - search
+  - awesome-pages
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_root_heading: true
+            heading_level: 3
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Overview: user-guide/overview.md
+    - Economy Basics: user-guide/economy.md
+    - Trading: user-guide/trading.md
+    - Mining: user-guide/mining.md
+    - Staking & Validators: user-guide/staking.md
+    - Validators (PoS): user-guide/validators.md
+    - DeFi (Pools, Lending, Savings): user-guide/defi.md
+    - Gambling: user-guide/gambling.md
+    - Items & Shop: user-guide/shop.md
+    - Reports & Bounties: user-guide/reports.md
+  - Admin Guide:
+    - Server Setup: admin-guide/setup.md
+    - Admin Commands: admin-guide/commands.md
+    - Economy Settings: admin-guide/economy.md
+    - Security & Moderation: admin-guide/security.md
+  - API Reference:
+    - Authentication: api/auth.md
+    - Endpoints: api/endpoints.md
+    - WebSocket: api/websocket.md
+  - Internal Commands: internal-commands.md
+  - Developer Guide:
+    - Extending Discoin: dev-guide/extending-discoin.md
+    - DiscoAI (native LLM): dev-guide/discoai.md

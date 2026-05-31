@@ -1,0 +1,20 @@
+name: Dependency Submission
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  component-detection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run component detection
+        uses: actions/component-detection-dependency-submission-action@374343effede691df3a5ffaf36b4e7acab919590
+        with:
+          detectorFilter: PipReport
+          detectorCategories: Python
