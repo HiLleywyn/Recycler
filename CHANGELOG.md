@@ -3,11 +3,12 @@
 ## [main] -- 2026-05-31 (9)
 
 ### New Features
-**Recycler: clanker economy packaged as its own AI-optional bot**: This build is the clanker economy split out as a standalone bot with the model brain lifted into the Sojourns platform. AI is now optional -- the full economy boots and runs with no AI configured, and AI-gated features (Disco / AI Chat, the clanker pattern controller, AI helpers) light up when a Sojourns backend is pointed at it.
+**Recycler: the clanker / clanktank bot, split into its own service**: This build is the Clanktank containment system (the `,clanker` command set, evidence clustering, cases, and the escape room) carved out of the old all-in-one Discoin build into a standalone bot. The cog registry loads a single cog -- `cogs.clanktank` -- so only the clanker command surface runs; the economy, games and NFTs stay in Discoin.
 
 ### Changes
-**AI inference routes to the Sojourns backend**: All model calls now travel through one configurable seam to an OpenAI-compatible backend served by Sojourns, set with `AI_BACKEND_URL`, `AI_BACKEND_KEY` and the `AI_ENABLED` master switch. When AI is disabled or the backend is unreachable, AI features degrade gracefully instead of erroring; the economy is unaffected.
-**Railway two-service topology**: Ships as a Railway service beside Sojourns (the controlling platform / AI host), reaching the AI over private networking at `http://sojourns.railway.internal:8080/v1`. The persistent volume is renamed `recycler_data`; `.env.example` is wired with a concrete backend URL and shared key.
+**No built-in AI; all AI calls route to Sojourns**: Recycler ships no model brain. The clanker's AI-assisted touches (e.g. escape-room reflection reformulation) call out to the Sojourns AI backend through one seam, selected by `AI_BACKEND_URL`, `AI_BACKEND_KEY` and the `AI_ENABLED` master switch. AI is optional -- with it off or the backend unreachable, containment, cases and the escape room run in full and only the AI-flavoured extras stand down.
+**No economy API; serves no HTTP**: The economy REST API/dashboard stays in Discoin. Recycler removes `api/`, `frontend/` and `charts/`, skips the embedded FastAPI server cleanly when the package is absent, and drops the Railway healthcheck since it serves no HTTP.
+**Railway topology**: Runs as a Railway service beside Sojourns (controlling platform / AI host) and Discoin, reaching the AI over private networking at `http://sojourns.railway.internal:8080/v1`. Persistent volume `recycler_data` holds the containment database; `.env.example` is wired with a concrete backend URL and shared key.
 
 ## [main] -- 2026-05-31 (8)
 

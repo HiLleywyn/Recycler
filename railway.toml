@@ -2,9 +2,10 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
+# Recycler is the clanker-only Discord bot. It serves no HTTP surface of its
+# own (the economy REST API/dashboard lives in Discoin), so there is no
+# healthcheck path -- Railway treats the running process as healthy.
 [deploy]
-healthcheckPath = "/health"
-healthcheckTimeout = 180
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 

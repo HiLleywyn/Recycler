@@ -50,91 +50,7 @@ from core.framework.redis_bus import RedisBus
 # ── Cog registry ──────────────────────────────────────────────────────────────
 
 COGS = [
-    "cogs.crypto",
-    "cogs.events",     # multi-phase market events (must load after crypto for drift compat)
-    "cogs.validators",
-    "cogs.contracts",
-    "cogs.bank",
-    "cogs.earn",
-    "cogs.play",
-    "cogs.stake",   # unified staking + validator system
-    "cogs.moons",   # Moons (MOON) economy: Lunar Mint group-token staking
-    "cogs.trade",
-    "cogs.faucet",
-    "cogs.nitro",       # sniper-safe Nitro sharing + lottery on the "." prefix
-    "cogs.chain_group",
-    "cogs.groups",
-    "cogs.admin",
-    "cogs.ai",         # ,ai command group: config, heal, model picker, tools, audit
-    "cogs.health",
-    "cogs.backup",
-    "cogs.shop",
-    "cogs.twofa",
-    "cogs.command_chain",  # chain parser + interactive error recovery
-    "cogs.approvals",      # agent-tool approve/deny card + ,approve/,deny cmds
-    "cogs.trades",   # must be last so it subscribes after other cogs publish
-    "cogs.help",
-    "cogs.report",
-    "cogs.migrate",
-    "cogs.diagnose",
-    "cogs.dev",        # developer-only commands
-    "cogs.status",     # player-facing .status
-    "cogs.economy",    # server-wide economy dashboard
-    "cogs.security",  # institutional security system
-    "cogs.clanktank", # Clanktank: scammer/bot account containment system
-    "cogs.nfts",       # NFT collections and marketplace
-    "cogs.predictions",  # prediction markets (polymarket-style)
-    "cogs.rugpull",      # king of rugs minigame
-    "cogs.beta_features",  # auto-compound + price alerts (beta)
-    "cogs.helpers",        # game helper / GM system
-    "cogs.social_context", # social interaction tracking + autonomous reactions
-    "cogs.chat",           # DB-backed AI chat with memory refresh
-    "cogs.chat_income",    # silent chat income + bot reply/reaction bonus
-    "cogs.chat_leveling",       # chat XP + level-up rewards (listener + user commands)
-    "cogs.chat_leveling_admin", # ,levelconfig admin group + CSV import
-    "cogs.chat_threads",        # thread-based AI chat + save/recall memory system
-    "cogs.eat_the_rich",   # Eat the Rich: class-warfare wealth game
-    "cogs.overview",       # /games and /market slash overview groups
-    "cogs.snapshots",      # periodic economy snapshots for rollback
-    "cogs.governance",     # DSC token governance voting
-    "cogs.buddy",          # CC Buddy: per-user ASCII companion (live panel) + ,buddy arena / ,buddy tourney (Buddy Battles expansion)
-    "cogs.disco_ai",       # DiscoAI: self-hosted LLM with persistent memory + tools
-    "cogs.disco",          # ,disco command group: boost/level-50/staff-gated AI controls
-    "cogs.achievements",   # badges awarded for economy milestones
-    "cogs.quests",         # daily + weekly rotating objectives
-    "cogs.seasons",        # guild-scoped net-worth seasons with prize pools
-    "cogs.challenges",     # server-wide collective goals with shared payouts
-    "cogs.fishing",        # fishing minigame -- animated cast, water buddies, leaderboards
-    "cogs.farming",        # farming minigame -- plots, crops, seasons, HRV/SEED economy
-    "cogs.dungeon",        # Delve crawler -- floors, mob captures, ore tiers, RUNE economy
-    "cogs.crafting",       # Crafting (Forge Network) -- combine fishing/farming/dungeon outputs
-    "cogs.auction",        # generic auction house: list / buy / browse any item kind
-    "cogs.nft",            # ,items -- per-unit NFT explorer + transfer (item_contracts / item_instances)
-    "cogs.lexicon",        # ,db -- item lexicon: browse / search / source-of-acquisition
-    "cogs.hub",            # ,today -- daily front-door panel with login streak + claim
-    "cogs.expeditions",    # ,expedition -- AI buddy timed runs (story log + weighted loot)
-    "cogs.calendar",       # ,calendar -- challenges + market events + recurring resets
-    "cogs.showcase",       # ,me -- paginated stats / wallet / skills / buddies dashboard
-    "cogs.changelog",      # player-facing CHANGELOG.md viewer
-    "cogs.premium",        # ,premium status/info/subscribe + PayPal-gated features
-    "cogs.discfun",        # Disc.Fun -- Pump.fun-style proto-token launchpad
-    "cogs.gamba",          # Gamba Network -- GBC + 8 game-token earn surface
-    "cogs.chess",          # Chess (Gamba Network) -- vs AI + PvP + ELO
-    "cogs.checkers",       # Checkers (Gamba Network) -- vs AI + PvP + ELO
-    "cogs.sage",           # Sage Network -- crypto learn-and-earn: pattern / gauge / tknom
-    "cogs.bottleneck",     # rank-based gain throttle + inline community pool
-    # ── V3 "Apex" Update ────────────────────────────────────────────────
-    # These cogs were shipped with the V3 rollout but never added to the
-    # loader, which is why ',profile' / ',mastery' / ',war' / ',inbox'
-    # came back as "command not found" in production. Wiring them in
-    # here so the V3 surface is actually live.
-    "cogs.profile",      # ,profile + equip/unequip/gallery/shop/buy/help -- cosmetic identity card
-    "cogs.mastery",      # ,mastery -- cross-system XP track skill tree (PNG node graph)
-    "cogs.clan_wars",    # ,war -- 12-node clan-vs-clan board (PNG map)
-    "cogs.inbox",        # ,inbox -- persistent in-bot notifications
-    "cogs.apex_events",  # ,apex / event poster -- cross-system world events
-    "cogs.onboarding",   # ,start -- 5-card interactive onboarding deck
-    "cogs.realmarket",   # $chart / $info -- live CoinGecko data, $-prefixed namespace
+    "cogs.clanktank",   # Clanktank: scammer/bot containment -- the only clanker command surface
 ]
 
 # Commands that can run in ANY channel even when bot_channels is set.
@@ -377,7 +293,14 @@ class Discoin(commands.Bot):
             return
 
         import uvicorn
-        from api.v2.main import create_app as create_v2_app
+        try:
+            from api.v2.main import create_app as create_v2_app
+        except ModuleNotFoundError:
+            # Recycler is the clanker-only bot and ships no economy REST API.
+            # The economy dashboard/API lives in Discoin; skip cleanly rather
+            # than crash when PORT is injected (e.g. on Railway).
+            log.info("No economy API package present; skipping embedded FastAPI server")
+            return
 
         v2_app = create_v2_app()
         v2_app.state.bot = self
