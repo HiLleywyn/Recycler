@@ -3,6 +3,9 @@
 # (discord.py, asyncpg, redis, fastapi, pillow, numpy, ...), so Recycler's
 # own requirements are intentionally tiny.
 #
-# Pin to a tag/commit for reproducible production builds. Tracks `main` now
-# that the framework has merged.
-bot-framework @ git+https://github.com/HiLleywyn/Framework.git@main
+# Pinned to a specific framework commit for reproducible builds. This also
+# busts the Docker layer cache on every framework bump: the `pip install`
+# layer is keyed on this file, so changing the commit forces a fresh pull
+# (an unchanged `@main` would be served stale from cache). To adopt a new
+# framework version, update this SHA.
+bot-framework @ git+https://github.com/HiLleywyn/Framework.git@d0f95b0cc8c9292121acd7156a789af5f238cd6c
