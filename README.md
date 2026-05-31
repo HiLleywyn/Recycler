@@ -66,6 +66,30 @@ To run **without AI**, leave `AI_BACKEND_URL`/keys blank (or set
 `AI_ENABLED=0`). The economy runs in full; AI-gated commands report that
 AI is unavailable rather than failing the bot.
 
+## Deploying on Railway
+
+Both bots are Dockerfied and run as **two services in one Railway
+project**. Sojourns is the controlling platform (and AI host); Recycler
+is the economy bot beside it. Recycler reaches the AI over Railway
+private networking:
+
+```
+Railway project
++- sojourns   (Dockerfile, WEB_ENABLED=true, WEB_PORT=8080)  <- controlling platform / AI
++- recycler   (Dockerfile, AI_BACKEND_URL=http://sojourns.railway.internal:8080/v1)
+```
+
+1. Deploy Sojourns with `WEB_ENABLED=true` and set its `AI_BACKEND_KEY`.
+2. Deploy Recycler; set `AI_BACKEND_URL=http://sojourns.railway.internal:8080/v1`
+   and the **same** `AI_BACKEND_KEY`. Attach a volume at `/data`
+   (`recycler_data`) for the economy database.
+3. To run Recycler with no AI at all, leave the backend vars blank or set
+   `AI_ENABLED=0`.
+
+`railway.toml` and `Dockerfile` ship with the repo. (Down the line
+Sojourns will host the bots directly; until then Railway is the host and
+Sojourns is the control plane.)
+
 ## Relationship to Discoin
 
 Recycler is the economy half of what used to be the all-in-one Discoin

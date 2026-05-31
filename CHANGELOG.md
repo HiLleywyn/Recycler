@@ -7,6 +7,7 @@
 
 ### Changes
 **AI inference routes to the Sojourns backend**: All model calls now travel through one configurable seam to an OpenAI-compatible backend served by Sojourns, set with `AI_BACKEND_URL`, `AI_BACKEND_KEY` and the `AI_ENABLED` master switch. When AI is disabled or the backend is unreachable, AI features degrade gracefully instead of erroring; the economy is unaffected.
+**Railway two-service topology**: Ships as a Railway service beside Sojourns (the controlling platform / AI host), reaching the AI over private networking at `http://sojourns.railway.internal:8080/v1`. The persistent volume is renamed `recycler_data`; `.env.example` is wired with a concrete backend URL and shared key.
 
 ## [main] -- 2026-05-31 (8)
 
