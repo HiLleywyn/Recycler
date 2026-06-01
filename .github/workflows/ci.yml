@@ -2,13 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: ["**"]
   pull_request:
-    branches: [main]
 
 jobs:
   test:
-    name: Compile and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,8 +14,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install test deps
-        run: pip install pytest
-      - name: Byte-compile Recycler's own modules
-        run: python -m compileall -q main.py bot_manifest.py database
+        run: pip install "discord.py>=2.6.0" pytest pytest-asyncio
       - name: Run tests
-        run: python -m pytest tests/ -q
+        run: python -m pytest -q tests/

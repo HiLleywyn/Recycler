@@ -1,40 +1,57 @@
-# Recycler — the ,clanker containment bot.
+# Recycler -- single-image deploy (Railway-ready).
 #
-# The framework is BUILT FROM THE FRAMEWORK REPO at image-build time (see the
-# pip install of bot-framework below). Recycler itself ships only its feature
-# code (cogs/clanktank.py) + manifest + entrypoint.
-
+# Zero-config: the framework (hilleywyn/framework, public) is pulled from its
+# default branch and auto-refreshes on every build (see step 1). No build args,
+# tokens, or env vars are required to deploy.
+#
+# Optional build arg:
+#   FRAMEWORK_REF  git ref of hilleywyn/framework to install (default: main)
+#
+# Example:
+#   docker build -t recycler .
 FROM python:3.12-slim-bookworm AS base
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PREFIX=. \
+    API_PORT=8080
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl git \
+        git curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
+# 1. Install the shared framework from its public repo.
+#
+# AUTOMATIC cache-busting -- no operator action, no env vars, no Railway access.
+# The framework is installed from git in a layer Docker would normally cache by
+# command text, so a redeploy could ship an OLD framework even after
+# hilleywyn/framework@main advances. To avoid that, ADD the GitHub commits API
+# response for the ref *first*: its body changes the moment a new commit lands
+# on the ref, which invalidates this layer's cache on its own. When nothing has
+# changed upstream the layer is reused (fast); when it has, pip reinstalls the
+# current framework. Every build therefore tracks the live ref hands-free.
+ARG FRAMEWORK_REF=main
+ADD https://api.github.com/repos/hilleywyn/framework/commits/${FRAMEWORK_REF} /tmp/framework.commit
+RUN pip install --no-cache-dir --force-reinstall \
+        "bot-framework @ git+https://github.com/hilleywyn/framework.git@${FRAMEWORK_REF}"
 
-# ── Build + install the framework straight from the Framework repo ────────────
-# requirements.txt pins `bot-framework @ git+https://github.com/HiLleywyn/Framework.git@<ref>`.
-# git is needed so pip can clone + build it. This single step pulls in the whole
-# shared runtime + data plane (core, constants, security, database).
+# 2. App-level dependencies.
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# ── Recycler's own (clanker-only) source ──────────────────────────────────────
+# 3. Application source.
 COPY . .
 
-# Recycler is cloud-native: point it at a managed PostgreSQL + Redis via
-# DATABASE_URL / REDIS_URL. The framework's data plane runs schema.sql +
-# migrations (including the clanker tables) automatically on first connect.
-ENV APP_NAME=Recycler \
-    PREFIX="," \
-    DATABASE_URL=postgresql://recycler:recycler@localhost:5432/recycler \
-    REDIS_URL=redis://localhost:6379 \
-    API_PORT= \
-    DEBUG=false
+# 4. Fail the build if the test suite is red.
+RUN pip install pytest pytest-asyncio \
+    && python -m pytest -q tests/
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -sf "http://localhost:${API_PORT:-8080}/health" || exit 1
+
 CMD ["python", "main.py"]

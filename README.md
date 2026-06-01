@@ -1,58 +1,68 @@
 # Recycler
 
-**Recycler** is the `,clanker` containment bot — the Clanktank
-scammer/bot-account detection, scoring and escape-room system, extracted out
-of Discoin into its own bot. It runs **all `,clanker` features and nothing
-else**, on the shared [`bot-framework`](https://github.com/HiLleywyn/Framework),
-and is managed from [Sojourns](https://github.com/HiLleywyn/Sojourns).
+A free, modern Discord **server-management bot** -- backups, templates,
+chatlogs, sync, import/export and settings -- plus the `.clank` account
+**containment** subset. Everything is rendered in Discord's **Components V2**
+UI, with **no premium tiers and no paywalls**. Built on the shared
+[`bot framework`](https://github.com/hilleywyn/framework) and templated for the
+[Sojourns](https://github.com/hilleywyn/sojourns) platform.
 
-## What's here
+> Inspired by what Xenon does for server management -- rebuilt on a modern,
+> open stack with the premium gating removed.
 
+## Features
+
+| Area | What it does | Commands |
+|---|---|---|
+| **Backups** | Full guild snapshots (settings, roles, channels, overwrites, optional messages); manual or on an interval | `.backup create` `.backup load` `.backup list` `.backup info` `.backup delete` `.backup interval` |
+| **Templates** | Shareable, structure-only blueprints anyone can apply | `.template create` `.template load` `.template browse` `.template info` `.template delete` |
+| **Chatlog** | Archive a channel's messages and replay them via webhook | `.chatlog create` `.chatlog load` `.chatlog list` `.chatlog delete` |
+| **Sync** | Mirror messages between channels and propagate bans between guilds | `.sync messages` `.sync bans` `.sync list` `.sync remove` |
+| **Import/Export** | Move backups in and out as portable JSON files | `.export <id>` `.import` (attach a file) |
+| **Settings** | Per-guild configuration in a Components V2 panel | `.settings` `.set prefix` `.set log` `.set containment` |
+| **Containment** | The ported `.clank` subset: scam/bot-account containment, evidence, account-linking, escape room | `.clank add` `.clank list` `.clank scan` `.clank help` |
+| **REST API** | Read backups/templates over HTTP | `GET /api/v2/...` (see docs) |
+
+## Quick start
+
+```bash
+git clone https://github.com/hilleywyn/recycler
+cd recycler
+cp .env.example .env          # fill in DISCORD_TOKEN + DATABASE_URL
+# install the framework (private repo) + deps, then run:
+pip install "bot-framework @ git+https://github.com/hilleywyn/framework.git@main"
+pip install -r requirements.txt
+python main.py
 ```
-cogs/clanktank.py   ← every ,clanker feature (the only cog)
-bot_manifest.py     ← APP_NAME + COGS = ["cogs.clanktank"]
-main.py             ← 3 lines: hand the manifest to the framework
-requirements.txt    ← bot-framework, built from the Framework repo
-Dockerfile          ← installs the framework from git, runs the bot
-```
 
-That's the whole bot. The runtime, the data plane (PostgreSQL schema +
-migrations, including the clanker tables), the AI bridge, prefix routing,
-error tracking and graceful shutdown all come from the framework.
-
-## How it's built
-
-The Dockerfile **builds the framework from the Framework repo** — `pip install`
-resolves `bot-framework @ git+https://github.com/HiLleywyn/Framework.git@<ref>`
-from `requirements.txt`, which clones and builds it. Recycler adds only its
-clanker source on top.
+Or build the container (Railway-ready -- no build args needed):
 
 ```bash
 docker build -t recycler .
-docker run --env-file .env recycler
+docker run --env-file .env -p 8080:8080 recycler
 ```
 
-Point `DATABASE_URL` / `REDIS_URL` at a managed PostgreSQL + Redis. The
-framework applies `schema.sql` + migrations (incl. clanker tables)
-automatically on first connect.
+## Documentation
 
-## AI is routed through Sojourns
+- **[`docs/deployment.md`](docs/deployment.md)** -- the thick, end-to-end
+  deployment guide: prerequisites and all four pathways (local/bare-metal,
+  Docker, Railway, Sojourns), post-deploy verification, upgrades/rollback and
+  troubleshooting. **Start here.**
+- [`docs/configuration.md`](docs/configuration.md) -- every environment
+  variable, grouped by feature, with defaults and effects.
+- [`docs/commands.md`](docs/commands.md) -- the complete command reference.
+- [`docs/install.md`](docs/install.md) -- a condensed install quick-start.
 
-The clanker AI feature (escape-room prompt reformulation + scan scoring) goes
-through the framework's AI bridge. Set the Sojourns env vars and that AI is
-**called from the Sojourns API** — the platform's OpenAI-compatible proxy
-gateway / AI controller — instead of OpenRouter:
+## How it's built
 
-```
-SOJOURNS_AI_BASE_URL=https://your-sojourns-host
-SOJOURNS_AI_API_KEY=<tenant token Sojourns issued for Recycler>
-SOJOURNS_BOT_ID=recycler
-```
+`main.py` boots from `sojourns.json` through the framework's shared runtime
+(`run_manifest`). The manifest's `features` list is the set of cogs to load and
+doubles as the deployment contract the Sojourns control plane reads. The data
+plane is a slim, economy-free Postgres layer with a file-based migration runner.
+The UI is Components V2 throughout (`core.framework.components`).
 
-See `.env.example` for the full configuration.
+See [`CLAUDE.md`](CLAUDE.md) for contributor conventions.
 
-## Managed from Sojourns
+## License
 
-Recycler is one of the first two bots registered in the Sojourns management
-platform (alongside Disco). Sojourns is its AI controller and its management
-surface — start/stop, status, config and AI usage are all driven from there.
+Free to self-host and modify.
