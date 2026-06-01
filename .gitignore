@@ -1,96 +1,10 @@
-# ── Secrets & environment ─────────────────────────────────────────────────────
-.env
-.env.local
-.env.*.local
-# .env.example is intentionally NOT ignored — it's the template for new installs
-
-# ── Database ──────────────────────────────────────────────────────────────────
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
-
-# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
-**/__pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 *.egg-info/
-*.egg
-dist/
-build/
-.eggs/
-.Python
-pip-freeze.txt
+.env
+.venv/
+venv/
 .pytest_cache/
 .mypy_cache/
-.ruff_cache/
-.pytype/
-.pdm-python
-.pdm-build/
-celerybeat-schedule
-celerybeat.pid
-
-# ── Virtual environments ───────────────────────────────────────────────────────
-venv/
-env/
-.venv/
-
-# ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
-logs/
-docs/superpowers/
-
-# ── Node / frontend ───────────────────────────────────────────────────────────
-node_modules/
-**/node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-.npm/
-.yarn/
-.pnp.*
-.eslintcache
-.stylelintcache
-
-# Frontend build output (rebuilt inside Docker — never commit)
-api/frontend/build/
-api/static/
-
-# ── Generated chart images (runtime artifacts) ───────────────────────────────
-charts/*.png
-charts/*.jpg
-charts/*.jpeg
-charts/*.gif
-
-# ── Generated docs (regenerate with scripts/gen_docs.py) ─────────────────────
-COMMANDS.md
-
-# ── IDE & editor ──────────────────────────────────────────────────────────────
-.vscode/
-.idea/
-*.swp
-*.swo
-*.code-workspace
-
-# ── Claude Code (local session data — not project files) ─────────────────────
-.claude/
-
-
-# ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
-Thumbs.db
-desktop.ini
-
-# ── Backups ───────────────────────────────────────────────────────────────────
-**/app_backup/
-**/*_backup/
-
-# Temp
-/temp/
-
-# MkDocs build output (rebuilt in Docker — never commit)
-/site/

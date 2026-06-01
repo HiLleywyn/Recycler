@@ -1,11 +1,12 @@
-# Recycler depends on the reusable bot framework, built straight from the
-# Framework repo. The framework pulls in every shared runtime dependency
-# (discord.py, asyncpg, redis, fastapi, pillow, numpy, ...), so Recycler's
-# own requirements are intentionally tiny.
+# Recycler runtime dependencies.
 #
-# Pinned to a specific framework commit for reproducible builds. This also
-# busts the Docker layer cache on every framework bump: the `pip install`
-# layer is keyed on this file, so changing the commit forces a fresh pull
-# (an unchanged `@main` would be served stale from cache). To adopt a new
-# framework version, update this SHA.
-bot-framework @ git+https://github.com/HiLleywyn/Framework.git@08809ed9b71c31e1762311092a963c855aa6747a
+# The shared bot framework (package name: bot-framework) is installed
+# separately by the Dockerfile from its git repo -- it provides core/,
+# constants/, security/ and the database base, plus its own pinned deps
+# (aiohttp, redis, pydantic, fastapi, uvicorn, pillow, matplotlib, numpy ...).
+# The pins below are the app-level guarantees layered on top of it.
+
+discord.py>=2.6.0          # Components V2 (LayoutView / Container) -- the default UI
+asyncpg>=0.29.0            # Postgres data plane
+fastapi>=0.109.0           # embedded REST API
+uvicorn[standard]>=0.27.0

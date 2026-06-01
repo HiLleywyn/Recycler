@@ -1,47 +1,71 @@
-# CLAUDE.md - Recycler
+# Recycler -- Claude Code Guidelines
 
-Recycler is the standalone **`,clanker` containment bot** (Clanktank). It runs on
-the shared `bot-framework` and ships **nothing from the economy** - its own slim,
-clanker-only database and a single cog.
+> This repo is the **server-tools** bot: backups, templates, chatlogs, sync,
+> import/export and settings. The `.clank` containment system and the moderation
+> + audit-logging suite live in a separate bot, **Clanksimus Prime**
+> (`hilleywyn/clanksimus-prime`). If you are looking for `.clank`/`mod`/`modlog`,
+> you are in the wrong repo.
 
-## Git & commits - hard rules
+Recycler is a free Discord server-management bot (backups, templates,
+chatlogs, sync, import/export, settings), built on the shared **bot framework**
+(`hilleywyn/framework`) and templated for the **Sojourns** platform via
+`sojourns.json`.
+
+## Default UI -- Components V2 (hard rule)
+
+**Components V2 is the default UI.** Build every user-facing message with
+`core.framework.components` (`Container().text(...).section(...).separator()...`
+sent via `send_v2` / `edit_v2`), never with `discord.Embed`. The cogs in this
+repo are the reference pattern -- match them. Reach for an embed only if a
+feature genuinely requires one (there are currently none). This needs
+`discord.py>=2.6`, which the Dockerfile and `requirements.txt` pin.
+
+## Git & commits -- hard rules
 
 - **Author AND committer are always `HiLleywyn <lleywyn@proton.me>`.** Never
   commit as `Claude` / `noreply@anthropic.com`. Use
   `git -c user.name="HiLleywyn" -c user.email="lleywyn@proton.me" commit`.
 - **Never** put `https://claude.ai/code/session_*` links in any committed
-  artifact.
-- **Never** put a model identifier in committed code/docs.
+  artifact (commit messages, PR bodies, comments).
+- **Never** put a model identifier (`claude-*`, "Claude", versions) in committed
+  code, docs, or commit messages.
 - Develop on a feature branch; open a PR to `main` ready for review.
+- Update `CHANGELOG.md` in the same commit as any user-visible change.
 
-## What this bot is (and isn't)
+## Architecture
 
-- `cogs/clanktank.py` - the only cog; every `,clanker` feature.
-- `sojourns.json` - the manifest: identity, `features: ["cogs.clanktank"]`,
-  credentials, `provision.database = postgres`, and the clanker settings schema.
-- `database/` - Recycler's **own** slim data layer: `schema.sql` (framework
-  runtime tables only) + `migrations/0285-0295` (the clanker tables, verbatim
-  from the framework) + a `Database` implementing exactly the surface the
-  framework + clanktank call. It shadows the framework's bundled economy
-  `database` package, so Recycler carries no economy schema.
-- `main.py` - `run_manifest(fallback_cogs=COGS, ...)`.
-- `requirements.txt` - pins `bot-framework` to a **specific commit SHA** (not
-  `@main`). Bumping the SHA is what adopts a new framework version AND busts the
-  Docker pip-cache so the redeploy actually pulls it.
+- `main.py` -- three lines: `run_manifest()` boots from `sojourns.json`
+  (its `features` is the cog list) with a fallback cog list.
+- `sojourns.json` -- the manifest. Source of truth for cogs + settings; the
+  Sojourns control plane reads the same file. Validate with
+  `python -m core.framework.manifest sojourns.json`.
+- `cogs/` -- the Components V2 server tools: `backups.py`, `templates.py`,
+  `chatlog.py`, `sync.py`, `importexport.py`, plus `settings.py` and `meta.py`.
+- `clanklib/serializer.py` -- guild <-> JSON (the engine behind backups +
+  templates). Pure serialize; explicit `RestoreOptions` for the destructive
+  restore path.
+- `database/` -- a **slim** data plane (no economy): `database.py`
+  (`PgDatabase`: pool, file migration runner, query helpers, the guild-settings
+  cache, repo accessors), `base.py` (`PgBaseRepo`), feature repos, and
+  `migrations/*.sql` (the `0001-0005` server tables). The framework imports
+  `database.Database` lazily.
+- `api/v2/main.py` -- `create_app(bot)` FastAPI app the framework auto-mounts
+  on `API_PORT`; `/health` is public, `/api/v2/*` needs `X-API-Key`.
 
-## Hard rules
+## Conventions
 
-- **No economy.** Recycler ships no `services` package and no economy tables. If
-  you add anything that imports `services.*` or an economy table, it's wrong -
-  it belongs in Disco. The framework gates economy boot on `has_economy()`, which
-  is False here.
-- **Slim DB stays slim.** Only add a table to `database/schema.sql` if the
-  framework runtime or clanktank actually queries it. Clanker schema changes go
-  in a new verbatim migration mirroring the framework's.
-- Plain ASCII in source - no em/en dashes.
+- Plain ASCII in source -- no em/en dashes or Unicode minus signs.
+- Use the framework, don't reimplement it: colors and `fmt_*` come from
+  `core.framework.ui`; UI from `core.framework.components`; cog bases from
+  `core.framework.cogs` (`GuildCog` for guild-only features).
+- `log = logging.getLogger(__name__)` -- never `print()`.
+- Management commands require a guild permission (`manage_guild` /
+  `administrator` / `manage_webhooks`) and the matching `bot_has_guild_permissions`.
+- No premium gating anywhere. Caps (e.g. `BACKUP_MAX_PER_USER`) are
+  abuse-prevention only and configurable.
 
-## AI (via Sojourns)
+## Serializer is the heart of this bot
 
-The clanker AI routes through Sojourns when `SOJOURNS_AI_BASE_URL` is set. With
-`SOJOURNS_PROVISION_SECRET` matching the platform, the key is derived
-automatically (no manual provisioning). See `.env.example`.
+`clanklib/serializer.py` turns a guild into JSON and back; backups, templates
+and import/export all build on it. Keep the serialize path pure and gate every
+destructive restore action behind an explicit `RestoreOptions` flag.

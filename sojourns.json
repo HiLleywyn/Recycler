@@ -1,67 +1,59 @@
 {
   "manifest_version": "1",
-
   "bot": {
     "slug": "recycler",
     "name": "Recycler",
-    "description": "The ,clanker scammer/bot-account containment bot (Clanktank).",
-    "author": "ericlancebrown",
     "version": "1.0.0",
-    "repo": "https://github.com/HiLleywyn/Recycler"
+    "description": "Free server backups, templates, chatlogs, sync and import/export, rendered in Discord Components V2.",
+    "author": "HiLleywyn",
+    "repo": "hilleywyn/recycler"
   },
-
-  "framework": { "package": "bot-framework", "min_version": "1.0.0" },
-
   "channels": ["discord"],
-
   "runtime": {
     "dockerfile": "Dockerfile",
-    "entrypoint": "main.py",
-    "resources": { "cpu": "0.5", "memory": "512Mi" }
+    "entrypoint": "main.py"
   },
-
   "credentials": [
-    { "key": "DISCORD_TOKEN",         "label": "Bot token",     "secret": true },
-    { "key": "DISCORD_CLIENT_ID",     "label": "Client ID" },
-    { "key": "DISCORD_CLIENT_SECRET", "label": "Client secret", "secret": true }
+    { "key": "DISCORD_TOKEN", "label": "Discord bot token", "secret": true }
   ],
-
   "provision": {
-    "database": "postgres"
+    "database": "postgres",
+    "redis": true
   },
-
+  "features": [
+    "cogs.meta",
+    "cogs.settings",
+    "cogs.backups",
+    "cogs.templates",
+    "cogs.chatlog",
+    "cogs.sync",
+    "cogs.importexport"
+  ],
   "settings": {
     "groups": [
-      { "id": "channels", "label": "Channel setup", "fields": [
-          { "key": "CLANKTANK_CHANNEL_ID", "type": "discord_channel",
-            "label": "Containment channel",
-            "help": "Channel where CLANKER users are visible and ambience is active." },
-          { "key": "CLANKTANK_LOG_CHANNEL_ID", "type": "discord_channel",
-            "label": "Mod log channel",
-            "help": "Where clanker add/remove/escape events are logged." },
-          { "key": "CLANKER_ROLE_ID", "type": "discord_role",
-            "label": "Clanker role",
-            "help": "The containment role applied to caught accounts." },
-          { "key": "CLANK_ESCAPE_THREAD_ID", "type": "discord_channel",
-            "label": "Escape-room thread",
-            "help": "Public thread where escape-room cases are posted." }
-      ]},
-      { "id": "clanktank", "label": "Clanktank", "fields": [
-          { "key": "CLANK_ESCAPE_WAIT_MINUTES", "type": "number",
-            "label": "Reflection wait (minutes)", "default": 8, "min": 1, "max": 120 }
-      ]},
-      { "id": "integrations", "label": "Integrations", "fields": [
-          { "key": "LOG_LEVEL", "type": "select", "label": "Log level", "default": "INFO",
-            "options": [
-              { "value": "INFO",  "label": "Info" },
-              { "value": "DEBUG", "label": "Debug" }
-            ]
-          }
-      ]}
+      {
+        "id": "general",
+        "label": "General",
+        "fields": [
+          { "key": "PREFIX", "type": "string", "label": "Command prefix", "default": "." },
+          { "key": "API_PORT", "type": "number", "label": "API / health port", "default": 8080 },
+          { "key": "DISCORD_CLIENT_ID", "type": "string", "label": "Discord application (client) ID", "required": true, "help": "Required. From the Discord developer portal OAuth2 page; powers the Invite button." }
+        ]
+      },
+      {
+        "id": "backups",
+        "label": "Backups",
+        "fields": [
+          { "key": "BACKUP_MAX_PER_USER", "type": "number", "label": "Max backups per user", "default": 50, "min": 1, "max": 1000 }
+        ]
+      },
+      {
+        "id": "api",
+        "label": "REST API",
+        "fields": [
+          { "key": "CLANK_API_KEY", "type": "secret", "label": "API key (enables /api/v2)" }
+        ]
+      }
     ]
-  },
-
-  "features": [
-    "cogs.clanktank"
-  ]
+  }
 }
