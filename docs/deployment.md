@@ -45,15 +45,18 @@ Recycler asks for only the permissions it actually uses -- **never
 Administrator**. The set is defined once in `clanklib/permissions.py` and drives
 the invite link, the `.setup` audit, and the Auren platform's Invite button:
 
-- View Channels, Send Messages, Embed Links, Read Message History (core)
+- View Channels, Send Messages, Embed Links, Attach Files, Read Message History
+  (core: reply, and send the `.export` backup file)
 - Manage Channels, Manage Roles (recreate channels/roles on backup/template restore)
+- Manage Server (restore server-level settings -- name, verification level,
+  content filter, AFK timeout -- on a backup/template restore)
 - Manage Webhooks (replay archived messages for chatlog/sync)
 - Ban Members (propagate bans between synced guilds)
 
 Build an invite URL (the `permissions` value is the union of the above):
 
 ```
-https://discord.com/oauth2/authorize?client_id=<CLIENT_ID>&permissions=805391380&scope=bot%20applications.commands
+https://discord.com/oauth2/authorize?client_id=<CLIENT_ID>&permissions=805424180&scope=bot%20applications.commands
 ```
 
 Once the bot is running you can also just type `.invite` (or `.about`) and it
