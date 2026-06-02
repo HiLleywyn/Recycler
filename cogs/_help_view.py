@@ -17,12 +17,12 @@ from clanklib.help import SECTIONS, command_lines, selected_sections
 
 
 def _invite_url(bot: Any) -> str:
+    # Single source of truth: clanklib.permissions builds an invite that asks
+    # for exactly the permissions the bot uses -- never Administrator.
+    from clanklib.permissions import invite_url
     from clanklib.settings import setting
     cid = getattr(bot.user, "id", None) or setting(bot, "DISCORD_CLIENT_ID", "")
-    return (
-        f"https://discord.com/oauth2/authorize?client_id={cid}"
-        "&permissions=8&scope=bot%20applications.commands"
-    )
+    return invite_url(cid)
 
 
 def _build_panel(bot: Any, prefix: str, chosen_keys: list[str], author_id: int):
