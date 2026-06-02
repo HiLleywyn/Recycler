@@ -15,7 +15,7 @@ covers all four pathways:
 Recycler runs as **one process**: a Discord gateway client plus an
 embedded HTTP server (REST API + `/health`). It needs exactly two external
 things to run: a **PostgreSQL database** and a **Discord bot token**. Redis is
-optional. It is built on the private `hilleywyn/framework` package, so every
+optional. It is built on the public `hilleywyn/framework` package, so every
 install pulls that package from git.
 
 ---
@@ -31,10 +31,9 @@ install pulls that package from git.
    the bot.
 3. Scroll to **Privileged Gateway Intents** and enable both that Recycler
    relies on:
-   - **Server Members Intent** - needed for ban sync, member-scoped permission
-     overwrites in backups/restores, and containment tracking.
-   - **Message Content Intent** - needed for message sync, chatlog archiving,
-     and `.clank` enforcement.
+   - **Server Members Intent** - needed for ban sync and member-scoped
+     permission overwrites in backups/restores.
+   - **Message Content Intent** - needed for message sync and chatlog archiving.
    Leave **Presence Intent** off (unused).
 4. (Optional) On the **OAuth2** tab, copy the **Client ID** into
    `DISCORD_CLIENT_ID`. It is only used to build a clean invite URL before the
@@ -67,13 +66,13 @@ you never apply SQL by hand. The data plane enables TLS automatically for
 remote hosts (and trusts Railway's self-signed certs); set `DB_SSL_VERIFY=1` to
 force full certificate verification.
 
-### 1.4 Access to the framework package
+### 1.4 The framework package
 
-The runtime lives in the **private** `hilleywyn/framework` repo. Every install
-path needs read access to it:
+The runtime lives in the **public** `hilleywyn/framework` repo, so no token or
+SSH key is required - every install path pulls it from git directly:
 
-- **Local**: none -- the framework repo is public.
-- **Docker / Railway**: none -- the image pulls the public framework automatically.
+- **Local**: `pip install` resolves it over plain HTTPS.
+- **Docker / Railway**: the image pulls it automatically at build time.
 
 The `FRAMEWORK_REF` setting (default `main`) picks which git ref to install.
 
@@ -95,11 +94,7 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 ### A.2 Install the framework, then the app deps
 
 ```bash
-# HTTPS with a token:
-pip install "bot-framework @ git+https://<TOKEN>@github.com/hilleywyn/framework.git@main"
-# ...or over SSH if your key has access:
-# pip install "bot-framework @ git+ssh://git@github.com/hilleywyn/framework.git@main"
-
+pip install "bot-framework @ git+https://github.com/hilleywyn/framework.git@main"
 pip install -r requirements.txt
 ```
 
@@ -271,12 +266,11 @@ On the bot service's **Variables** tab:
 | `API_PORT` | `8080` |
 | `CLANK_API_KEY` | optional - set to enable `/api/v2` |
 | `BACKUP_MAX_PER_USER` | optional - default `50` |
-| containment vars | `CLANKER_ROLE_ID`, `CLANKTANK_CHANNEL_ID`, ... if you use `.clank` |
 
-### C.4 Set Build Variables (the private framework dep)
+### C.4 Set Build Variables (the framework dep)
 
-The image must install the framework from its private repo, so add **build**
-variables (Railway passes matching variables as Docker build args):
+The image installs the framework from its public repo at build time. The only
+build variable you might set selects the ref:
 
 | Build variable | Value |
 |---|---|
@@ -306,9 +300,9 @@ contract Sojourns reads.
 - **`features`** - the exact cog list to load (same list `main.py` boots from);
 - **`credentials`** - the secrets to collect (`DISCORD_TOKEN`, marked secret);
 - **`provision`** - that it needs a Postgres database;
-- **`settings`** - grouped fields (prefix, backup cap, API key, containment
-  channels/roles) that Sojourns renders as a dynamic configuration UI and
-  pushes to the running bot via `bot.settings`.
+- **`settings`** - grouped fields (prefix, API port, client id, backup cap, API
+  key) that Sojourns renders as a dynamic configuration UI and pushes to the
+  running bot via `bot.settings`.
 
 Validate it any time:
 
@@ -324,10 +318,9 @@ python -m core.framework.manifest sojourns.json
 2. When prompted, paste `DISCORD_TOKEN`. Sojourns stores it in its vault (the
    field is declared `secret`), provisions Postgres
    (`provision.database = "postgres"`) and injects `DATABASE_URL`.
-3. Set any settings in the generated UI - prefix, `BACKUP_MAX_PER_USER`,
-   `CLANK_API_KEY`, and the containment channel/role fields. Each maps to a
-   control defined in the manifest and is delivered to the bot without a code
-   change.
+3. Set any settings in the generated UI - prefix, `BACKUP_MAX_PER_USER` and
+   `CLANK_API_KEY`. Each maps to a control defined in the manifest and is
+   delivered to the bot without a code change.
 4. Deploy. Sojourns runs the same Dockerfile/runtime; first boot applies
    migrations.
 
@@ -402,11 +395,6 @@ the full command list see [commands.md](commands.md).
 | `CLANK_API_KEY` | no | - | Enables `/api/v2`; sent as `X-API-Key`. |
 | `BACKUP_MAX_PER_USER` | no | `50` | Per-user backup cap (anti-abuse). |
 | `DISCORD_CLIENT_ID` | no | - | For the invite URL before login. |
-| `CLANKER_ROLE_ID` | no | - | `.clank` containment role. |
-| `CLANKTANK_CHANNEL_ID` | no | - | `.clank` tank channel. |
-| `CLANKTANK_LOG_CHANNEL_ID` | no | - | `.clank` mod-log channel. |
-| `CLANK_ESCAPE_THREAD_ID` | no | - | `.clank` escape-room thread. |
-| `CLANK_ESCAPE_WAIT_MINUTES` | no | `8` | `.clank` reflection wait. |
 | `REDIS_URL` | no | - | Enables framework Redis features. |
 | `DB_SSL_VERIFY` | no | `0` | `1` forces full DB TLS verification. |
 | `FRAMEWORK_REF` (build) | no | `main` | Framework git ref to install. |

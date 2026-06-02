@@ -15,7 +15,7 @@ service variables, on Sojourns via the settings UI generated from
 
 | Variable | Default | What changes if you flip it |
 |---|---|---|
-| `PREFIX` | `.` | Command prefix. Commands become `.backup`, `.clank`, ... A per-guild override can be set with `.set prefix`. |
+| `PREFIX` | `.` | Command prefix. Commands become `.backup`, `.template`, ... A per-guild override can be set with `.set prefix`. |
 | `API_PORT` | `8080` | Port for the embedded REST API + `/health`. |
 | `DEBUG` | `false` | Verbose logging and relaxed production guards. |
 | `DISCORD_CLIENT_ID` | -- | Used only to build the invite URL before the bot is logged in. |
@@ -31,20 +31,6 @@ service variables, on Sojourns via the settings UI generated from
 | Variable | Default | What changes if you flip it |
 |---|---|---|
 | `BACKUP_MAX_PER_USER` | `50` | Soft cap on stored backups per user (abuse prevention, not a paywall). |
-
-## Containment (`.clank`)
-
-These mirror the ported Discoin behaviour; channel/role values are Discord ids.
-Per-guild overrides for the containment channels can also be set with
-`.set containment` / `.set containmentlog`.
-
-| Variable | Default | What it is |
-|---|---|---|
-| `CLANKER_ROLE_ID` | -- | The role applied to contained accounts. |
-| `CLANKTANK_CHANNEL_ID` | -- | The "tank" channel contained users are limited to. |
-| `CLANKTANK_LOG_CHANNEL_ID` | -- | Mod log channel for containment events (optional). |
-| `CLANK_ESCAPE_THREAD_ID` | -- | Shared escape-room thread (optional). Can be set live with `.clank er setthread`. |
-| `CLANK_ESCAPE_WAIT_MINUTES` | `8` | Reflection wait before the escape room opens. |
 
 ## Optional
 

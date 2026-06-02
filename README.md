@@ -1,14 +1,17 @@
 # Recycler
 
 A free, modern Discord **server-management bot** -- backups, templates,
-chatlogs, sync, import/export and settings -- plus the `.clank` account
-**containment** subset. Everything is rendered in Discord's **Components V2**
-UI, with **no premium tiers and no paywalls**. Built on the shared
-[`bot framework`](https://github.com/hilleywyn/framework) and templated for the
-[Sojourns](https://github.com/hilleywyn/sojourns) platform.
+chatlogs, sync, import/export and settings -- rendered in Discord's
+**Components V2** UI, with **no premium tiers and no paywalls**. Built on the
+shared [`bot framework`](https://github.com/hilleywyn/framework) and templated
+for the [Sojourns](https://github.com/hilleywyn/sojourns) platform.
 
 > Inspired by what Xenon does for server management -- rebuilt on a modern,
 > open stack with the premium gating removed.
+
+Recycler is the **server-tools** half of the project. Moderation, audit logging
+and the `.clank` account-containment system live in a separate bot,
+**Clanksimus Prime** (`hilleywyn/clanksimus-prime`).
 
 ## Features
 
@@ -19,8 +22,7 @@ UI, with **no premium tiers and no paywalls**. Built on the shared
 | **Chatlog** | Archive a channel's messages and replay them via webhook | `.chatlog create` `.chatlog load` `.chatlog list` `.chatlog delete` |
 | **Sync** | Mirror messages between channels and propagate bans between guilds | `.sync messages` `.sync bans` `.sync list` `.sync remove` |
 | **Import/Export** | Move backups in and out as portable JSON files | `.export <id>` `.import` (attach a file) |
-| **Settings** | Per-guild configuration in a Components V2 panel | `.settings` `.set prefix` `.set log` `.set containment` |
-| **Containment** | The ported `.clank` subset: scam/bot-account containment, evidence, account-linking, escape room | `.clank add` `.clank list` `.clank scan` `.clank help` |
+| **Settings** | Per-guild configuration in a Components V2 panel | `.settings` `.set prefix` `.set log` |
 | **REST API** | Read backups/templates over HTTP | `GET /api/v2/...` (see docs) |
 
 ## Quick start
@@ -29,7 +31,7 @@ UI, with **no premium tiers and no paywalls**. Built on the shared
 git clone https://github.com/hilleywyn/recycler
 cd recycler
 cp .env.example .env          # fill in DISCORD_TOKEN + DATABASE_URL
-# install the framework (private repo) + deps, then run:
+# install the framework (public) + deps, then run:
 pip install "bot-framework @ git+https://github.com/hilleywyn/framework.git@main"
 pip install -r requirements.txt
 python main.py
