@@ -1,6 +1,6 @@
 """Recycler entrypoint.
 
-Boots from ``sojourns.json`` (the manifest's ``features`` is the cog list and
+Boots from ``auren.json`` (the manifest's ``features`` is the cog list and
 ``bot.name`` is the app name) via the shared framework runtime. If the
 manifest is missing or invalid the bot still starts from the fallback cog
 list below, so a packaging slip can never make a working bot refuse to boot.
@@ -22,7 +22,7 @@ if not os.getenv("JWT_SECRET"):
 
 from core.framework.run import run_manifest  # noqa: E402  (must follow the JWT_SECRET default above)
 
-# Mirrors sojourns.json -> features. Kept in sync as a safety net only; the
+# Mirrors auren.json -> features. Kept in sync as a safety net only; the
 # manifest is the source of truth at runtime.
 _FALLBACK_COGS = [
     "cogs.meta",

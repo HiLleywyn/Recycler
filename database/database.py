@@ -171,7 +171,7 @@ class PgDatabase:
         """Set a real column (when ``key`` is one) or a ``features`` JSONB key.
 
         ``key`` is normalised through :data:`_GUILD_KEY_ALIASES` first so that
-        a setting pushed from the Sojourns control plane (manifest env-style
+        a setting pushed from the Auren control plane (manifest env-style
         keys like ``CLANK_ESCAPE_THREAD_ID``) lands under the same canonical
         lowercase key the cogs read (``clank_escape_thread``). Without this the
         web UI and the bot use divergent namespaces and settings silently no-op.
@@ -239,10 +239,10 @@ _GUILD_SETTING_COLUMNS: frozenset[str] = frozenset({
 })
 
 
-# Map the manifest's env-style setting keys (what the Sojourns web UI and the
+# Map the manifest's env-style setting keys (what the Auren web UI and the
 # control-plane heartbeat speak) onto the canonical lowercase per-guild keys the
 # cogs read. Any unmapped key passes through unchanged. This is the single
-# bridge between the two namespaces; keep it aligned with sojourns.json and
+# bridge between the two namespaces; keep it aligned with auren.json and
 # clanklib.guild_schema.GUILD_FIELDS.
 _GUILD_KEY_ALIASES: dict[str, str] = {
     "PREFIX": "prefix",

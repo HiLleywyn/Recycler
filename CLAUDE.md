@@ -8,8 +8,8 @@
 
 Recycler is a free Discord server-management bot (backups, templates,
 chatlogs, sync, import/export, settings), built on the shared **bot framework**
-(`hilleywyn/framework`) and templated for the **Sojourns** platform via
-`sojourns.json`.
+(`hilleywyn/framework`) and templated for the **Auren** platform via
+`auren.json`.
 
 ## Default UI -- Components V2 (hard rule)
 
@@ -34,11 +34,11 @@ feature genuinely requires one (there are currently none). This needs
 
 ## Architecture
 
-- `main.py` -- three lines: `run_manifest()` boots from `sojourns.json`
+- `main.py` -- three lines: `run_manifest()` boots from `auren.json`
   (its `features` is the cog list) with a fallback cog list.
-- `sojourns.json` -- the manifest. Source of truth for cogs + settings; the
-  Sojourns control plane reads the same file. Validate with
-  `python -m core.framework.manifest sojourns.json`.
+- `auren.json` -- the manifest. Source of truth for cogs + settings; the
+  Auren control plane reads the same file. Validate with
+  `python -m core.framework.manifest auren.json`.
 - `cogs/` -- the Components V2 server tools: `backups.py`, `templates.py`,
   `chatlog.py`, `sync.py`, `importexport.py`, plus `settings.py` and `meta.py`.
 - `clanklib/serializer.py` -- guild <-> JSON (the engine behind backups +

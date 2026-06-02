@@ -1,6 +1,6 @@
 """Tests for clanklib.settings -- the live-config resolution layer.
 
-The point of this module is that config changes pushed from the Sojourns UI
+The point of this module is that config changes pushed from the Auren UI
 (into ``bot.settings``) take effect without a redeploy, with env and defaults
 as fallbacks. These tests pin that precedence with a stub bot.
 """

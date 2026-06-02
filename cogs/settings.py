@@ -2,7 +2,7 @@
 
 This build (server tools: backups/templates/chatlog/sync/import-export) exposes
 just the prefix and the log channel. The same per-guild keys are editable from
-the Sojourns web UI via clanklib.guild_schema, so the two surfaces agree.
+the Auren web UI via clanklib.guild_schema, so the two surfaces agree.
 """
 from __future__ import annotations
 

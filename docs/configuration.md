@@ -1,8 +1,8 @@
 # Configuration
 
 Every setting is an environment variable (locally via `.env`, on Railway via
-service variables, on Sojourns via the settings UI generated from
-`sojourns.json`). Defaults are shown where they exist.
+service variables, on Auren via the settings UI generated from
+`auren.json`). Defaults are shown where they exist.
 
 ## Required
 
