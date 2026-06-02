@@ -9,6 +9,10 @@
     "repo": "hilleywyn/recycler"
   },
   "channels": ["discord"],
+  "discord": {
+    "permissions": "805391380",
+    "scopes": ["bot", "applications.commands"]
+  },
   "runtime": {
     "dockerfile": "Dockerfile",
     "entrypoint": "main.py"

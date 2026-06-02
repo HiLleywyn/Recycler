@@ -1,5 +1,17 @@
 # Changelog
 
+## [recycler] -- 2026-06-02
+
+### Changes
+- **Least-privilege invite everywhere.** The leftover `.help` "Add to server"
+  button (`cogs/_help_view.py`) still built an Administrator (`permissions=8`)
+  invite; it now uses the single source of truth in `clanklib/permissions.py`
+  like `.invite`/`.about`/`.setup`, so every invite asks only for the
+  permissions the bot uses (`permissions=805391380`). The manifest now declares
+  this set under `discord` in `auren.json` so the Auren platform's Invite
+  button matches, and a new test pins the manifest value to
+  `required_bot_permissions()` so they can never drift. Deployment docs updated.
+
 ## [recycler] -- 2026-06-01
 
 ### Changes

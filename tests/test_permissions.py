@@ -47,3 +47,18 @@ def test_audit_flags_missing_and_passes_on_admin():
 
 def test_pretty_perm_label():
     assert perms.pretty_perm("manage_roles") == "Manage Roles"
+
+
+def test_manifest_permissions_match_required():
+    """auren.json's declared invite permissions (which the Auren platform's
+    Invite button reads) must equal the code's required set, so the two can
+    never drift apart."""
+    import json
+    from pathlib import Path
+
+    manifest = json.loads(
+        (Path(__file__).resolve().parent.parent / "auren.json").read_text()
+    )
+    declared = int(manifest["discord"]["permissions"])
+    assert declared == perms.required_bot_permissions().value
+    assert declared != 8  # never Administrator
