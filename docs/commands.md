@@ -56,22 +56,6 @@ server permission; the bot also needs the matching permission itself.
 | `.settings` | Manage Server | Show this server's configuration. |
 | `.set prefix <p>` | Manage Server | Set a per-guild prefix. |
 | `.set log <#channel>` | Manage Server | Set the log channel (`none` to clear). |
-| `.set containment <#channel>` | Manage Server | Set the containment channel. |
-| `.set containmentlog <#channel>` | Manage Server | Set the containment log channel. |
-
-## Containment (`.clank`, alias `.clanker`)
-
-The full ported containment subset. Highlights:
-
-| Command | What it does |
-|---|---|
-| `.clank add <@user> [reason]` | Contain an account. |
-| `.clank remove <@user>` | Release an account. |
-| `.clank list` | Active contained accounts. |
-| `.clank info <@user>` | Record, score and evidence for an account. |
-| `.clank scan` | Score active accounts / a guarded role band. |
-| `.clank chart` | Containment analytics chart. |
-| `.clank help` | Full containment help. |
 
 ## REST API
 
