@@ -1,4 +1,4 @@
-"""Validate sojourns.json without importing the (discord-dependent) framework.
+"""Validate auren.json without importing the (discord-dependent) framework.
 
 These checks mirror the framework's manifest contract and additionally assert
 that every declared feature maps to a real cog module in this repo, so a typo
@@ -10,7 +10,7 @@ import json
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MANIFEST = ROOT / "sojourns.json"
+MANIFEST = ROOT / "auren.json"
 
 ALLOWED_TYPES = {
     "string", "number", "boolean", "select", "secret",

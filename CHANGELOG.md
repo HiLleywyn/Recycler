@@ -9,8 +9,8 @@
   framework-only Clanktank source (single `cogs/clanktank.py`, the slim clanker
   schema and `bot_manifest.py`) is replaced by the self-contained server-tools
   app (its own `clanklib/`, `api/v2`, slim server-only `database/` and cogs).
-  Identity is rebranded to **Recycler** throughout (`sojourns.json` slug/name,
-  app name, webhook + backup labels), so the bot deploys via Sojourns under its
+  Identity is rebranded to **Recycler** throughout (`auren.json` slug/name,
+  app name, webhook + backup labels), so the bot deploys via Auren under its
   own `recycler` slug just like before. The `.clank` containment + moderation
   suite now lives in the separate **Clanksimus Prime** bot.
 
@@ -29,10 +29,10 @@
 
 ### New Features
 - **Per-guild settings API**: A key-protected REST surface (`/api/v2/guilds/{id}/settings`, with a `/schema` endpoint) to read and update each server's config (prefix, log + containment channels) from outside Discord, sharing one validated schema with the `.set` command.
-- **Live settings**: Configuration changes made in the Sojourns control panel
+- **Live settings**: Configuration changes made in the Auren control panel
   now take effect immediately, without a redeploy. Cogs read runtime config
   (prefix, backup cap, API key, client id) from the live settings layer rather
-  than a boot-time environment snapshot, so the Sojourns control link's
+  than a boot-time environment snapshot, so the Auren control link's
   per-heartbeat sync actually reaches the commands.
 - **Server backups**: Create full, restorable guild snapshots (settings, roles,
   categories, channels, permission overwrites and optional recent messages),
@@ -54,7 +54,7 @@
 
 ### Documentation
 - Thick, end-to-end deployment guide (`docs/deployment.md`) covering all four
-  pathways - local/bare-metal, Docker, Railway and Sojourns - with
+  pathways - local/bare-metal, Docker, Railway and Auren - with
   prerequisites, post-deploy verification, upgrade/rollback and troubleshooting.
 - Installation quick-start, full configuration reference and a complete command
   reference.
@@ -121,7 +121,7 @@
   `.modlog prune <days>` and `.modlog test`. Muted categories are still
   recorded for the timeline.
 - Per-category log routing and a default mod log channel, configurable in both
-  Discord and the Sojourns web UI.
+  Discord and the Auren web UI.
 - **Tamper-evident audit chain**: every event stores the hash of the previous
   event plus its own; `.modlog verify` walks the chain and reports the first
   break (an altered or deleted row).
@@ -137,14 +137,14 @@
 
 ### Changes
 - Components V2 is the default UI across every command.
-- Templated for Sojourns via `sojourns.json` (validated in CI).
+- Templated for Auren via `auren.json` (validated in CI).
 - **Role-based clanker hunters**: The scam-hunter system now keys off a
   configurable hunter role instead of a per-user whitelist. Anyone wearing the
   role can report in the hunter channel and is immune to automatic clanking;
   the old `.clank hunter add/remove` user commands are replaced by
   `.clank hunter role @role`.
 - **Full config surface, Discord and web**: Every containment/moderation option
-  is now editable both in Discord (`.set ...`) and in the Sojourns web UI, and
+  is now editable both in Discord (`.set ...`) and in the Auren web UI, and
   the two surfaces write the same per-guild keys. New/exposed options: clanker
   role, clanker category, clanktank channel, clanker log channel, escape-room
   thread, reflection period, hunter role, hunter channel, mod log channel.
@@ -152,7 +152,7 @@
   per server (`.set reflection <minutes>` or the web UI).
 
 ### Fixes
-- **Web-UI settings now actually apply**: settings pushed from the Sojourns
+- **Web-UI settings now actually apply**: settings pushed from the Auren
   control plane used manifest env-style keys (`CLANK_ESCAPE_THREAD_ID`) while
   the bot read canonical lowercase keys (`clank_escape_thread`); the two
   namespaces never met, so values set in the web UI silently no-op'd. The DB

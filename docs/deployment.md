@@ -7,7 +7,7 @@ covers all four pathways:
 2. [Pathway A - Local / bare metal](#pathway-a--local--bare-metal)
 3. [Pathway B - Docker](#pathway-b--docker)
 4. [Pathway C - Railway](#pathway-c--railway)
-5. [Pathway D - Sojourns (managed)](#pathway-d--sojourns-managed)
+5. [Pathway D - Auren (managed)](#pathway-d--auren-managed)
 6. [Post-deploy verification](#6-post-deploy-verification)
 7. [Upgrades, backups of the bot, and rollback](#7-upgrades-and-rollback)
 8. [Troubleshooting](#8-troubleshooting)
@@ -286,46 +286,46 @@ build variable you might set selects the ref:
 
 ---
 
-## Pathway D - Sojourns (managed)
+## Pathway D - Auren (managed)
 
-Best when you want the Sojourns control plane to deploy, configure and manage
-the bot. Recycler ships a `sojourns.json` manifest, which is the deployment
-contract Sojourns reads.
+Best when you want the Auren control plane to deploy, configure and manage
+the bot. Recycler ships a `auren.json` manifest, which is the deployment
+contract Auren reads.
 
 ### D.1 What the manifest declares
 
-`sojourns.json` tells Sojourns:
+`auren.json` tells Auren:
 
 - **identity** - slug, name, version, repo;
 - **`features`** - the exact cog list to load (same list `main.py` boots from);
 - **`credentials`** - the secrets to collect (`DISCORD_TOKEN`, marked secret);
 - **`provision`** - that it needs a Postgres database;
 - **`settings`** - grouped fields (prefix, API port, client id, backup cap, API
-  key) that Sojourns renders as a dynamic configuration UI and pushes to the
+  key) that Auren renders as a dynamic configuration UI and pushes to the
   running bot via `bot.settings`.
 
 Validate it any time:
 
 ```bash
-python -m core.framework.manifest sojourns.json
+python -m core.framework.manifest auren.json
 ```
 
 ### D.2 Register and deploy
 
-1. In Sojourns, add a **managed bot** pointing at the `recycler` repo.
-   Sojourns parses `sojourns.json` and shows the identity, the feature list, the
+1. In Auren, add a **managed bot** pointing at the `recycler` repo.
+   Auren parses `auren.json` and shows the identity, the feature list, the
    credentials to collect and the settings UI.
-2. When prompted, paste `DISCORD_TOKEN`. Sojourns stores it in its vault (the
+2. When prompted, paste `DISCORD_TOKEN`. Auren stores it in its vault (the
    field is declared `secret`), provisions Postgres
    (`provision.database = "postgres"`) and injects `DATABASE_URL`.
 3. Set any settings in the generated UI - prefix, `BACKUP_MAX_PER_USER` and
    `CLANK_API_KEY`. Each maps to a control defined in the manifest and is
    delivered to the bot without a code change.
-4. Deploy. Sojourns runs the same Dockerfile/runtime; first boot applies
+4. Deploy. Auren runs the same Dockerfile/runtime; first boot applies
    migrations.
 
-Because `main.py` boots from the **same** `sojourns.json`, there is no drift
-between a standalone run and a Sojourns-managed deployment - the manifest is the
+Because `main.py` boots from the **same** `auren.json`, there is no drift
+between a standalone run and a Auren-managed deployment - the manifest is the
 single source of truth for both.
 
 ---
@@ -351,7 +351,7 @@ Run these regardless of pathway:
 
 ## 7. Upgrades and rollback
 
-- **Code upgrade**: redeploy the branch/tag. On Railway/Sojourns this is a
+- **Code upgrade**: redeploy the branch/tag. On Railway/Auren this is a
   push or a redeploy click; with Docker, rebuild and `docker compose up -d`.
   New migrations apply automatically on boot; existing data is preserved.
 - **Framework upgrade**: bump `FRAMEWORK_REF` to the desired ref and rebuild.

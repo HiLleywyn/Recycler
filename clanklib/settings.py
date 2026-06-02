@@ -3,9 +3,9 @@
 Precedence, highest first:
 
 1. Per-guild override stored in ``guild_settings`` (set via ``.set ...``).
-2. The bot's live ``Settings`` object (``bot.settings``), which the Sojourns
+2. The bot's live ``Settings`` object (``bot.settings``), which the Auren
    control link refreshes on every heartbeat -- so a change made in the
-   Sojourns UI takes effect without a redeploy.
+   Auren UI takes effect without a redeploy.
 3. The matching environment variable.
 4. The caller's default.
 
