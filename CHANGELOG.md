@@ -3,6 +3,15 @@
 ## [recycler] -- 2026-06-02
 
 ### Changes
+- **Invite now covers every feature (still no Administrator).** The previous
+  least-privilege set was missing two permissions the bot genuinely uses, so
+  those actions failed after a fresh invite. Added to
+  `clanklib/permissions.py` (the single source of truth): `manage_guild`
+  (restore server-level settings -- name, verification level, content filter,
+  AFK timeout -- in `clanklib/serializer.py`'s backup/template restore) and
+  `attach_files` (the `.export` command sends the backup as a JSON file). The
+  invite/`.setup` audit/manifest value moves from `805391380` to `805424180`;
+  the manifest-vs-code test keeps them in lockstep.
 - **Least-privilege invite everywhere.** The leftover `.help` "Add to server"
   button (`cogs/_help_view.py`) still built an Administrator (`permissions=8`)
   invite; it now uses the single source of truth in `clanklib/permissions.py`

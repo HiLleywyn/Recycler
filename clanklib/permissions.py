@@ -42,13 +42,16 @@ class FeaturePerm:
 FEATURES: tuple[FeaturePerm, ...] = (
     FeaturePerm(
         "core", "Core",
-        ("view_channel", "send_messages", "embed_links", "read_message_history"),
-        "Read and reply in channels.",
+        ("view_channel", "send_messages", "embed_links", "attach_files",
+         "read_message_history"),
+        "Read and reply in channels, and post export files (.export).",
     ),
     FeaturePerm(
         "backups", "Backups and templates",
-        ("manage_channels", "manage_roles"),
-        "Recreate channels and roles when restoring a backup or template.",
+        ("manage_channels", "manage_roles", "manage_guild"),
+        "Recreate channels and roles and restore server-level settings (name, "
+        "verification level, content filter, AFK timeout) from a backup or "
+        "template.",
     ),
     FeaturePerm(
         "chatlog_sync", "Chatlog and sync",
